@@ -1,0 +1,2154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F1EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171A" media="(prefers-color-scheme: dark)">
+<title>Nayar Dental — Prosthodontics &amp; Implantology, New Delhi</title>
+<meta name="description" content="A dental practice led by Dr. Sanjna Nayar, BDS, MDS (Prosthodontics &amp; Implantology), PhD. Considered dentistry, advanced technology and careful clinical planning in New Delhi.">
+<meta name="author" content="Nayar Dental">
+
+<!-- Social preview. Replace og:image with the clinic's own photography before launch. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nayar Dental — Prosthodontics &amp; Implantology">
+<meta property="og:description" content="Thoughtful dentistry, advanced technology, and exceptional care — designed around you.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1200&q=70&fm=jpg">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2316171A'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%23F4F1EC' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="preconnect" href="https://videos.pexels.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap">
+
+<!-- Factual structured data only. Contact details are placeholders and are deliberately omitted here. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dentist",
+  "name": "Nayar Dental",
+  "description": "Prosthodontics, implantology and cosmetic dentistry led by Dr. Sanjna Nayar.",
+  "areaServed": "New Delhi, India",
+  "medicalSpecialty": "Dentistry",
+  "employee": {
+    "@type": "Person",
+    "name": "Dr. Sanjna Nayar",
+    "jobTitle": "Prosthodontist and Implantologist",
+    "hasCredential": "BDS; MDS (Prosthodontics & Implantology); PhD (Dental Implantology); Fellow, ICOI (USA)"
+  }
+}
+</script>
+
+<style>
+/* ==========================================================================
+   NAYAR DENTAL
+   Single-file site. Structure:
+     1. Tokens          — colour, type, spacing, motion
+     2. Reset & base
+     3. Primitives      — grid, rules, eyebrows, buttons, reveals
+     4. Navigation
+     5. Hero            — scroll-driven cinematic sequence
+     6. Sections        — intro, treatments, experience, technology,
+                          results, doctor, stories, appointment, contact
+     7. Footer
+     8. Responsive      — a separate mobile composition, not a scaled desktop
+     9. Reduced motion
+   Everything the clinic needs to change lives either in :root below or in
+   the CONFIG object at the top of the script at the end of this file.
+   ========================================================================== */
+
+/* ---------- 1. TOKENS ---------------------------------------------------- */
+:root{
+  /* Ground tones — warm, never blue-white */
+  --ivory:      #F4F1EC;
+  --paper:      #FAF8F5;
+  --bone:       #E9E4DA;
+  --bone-deep:  #DCD5C8;
+
+  /* Ink */
+  --ink:        #16171A;
+  --graphite:   #1E2024;
+  --charcoal:   #33353A;
+  --slate:      #6B6C6B;
+  --quiet:      #8E8D88;
+
+  /* One restrained accent — muted clinical green, used sparingly */
+  --accent:     #5C7A6E;
+  --accent-lo:  #8FA79B;
+
+  /* Hairlines are the primary structural device on this site */
+  --line:       rgba(22,23,26,.14);
+  --line-soft:  rgba(22,23,26,.08);
+  --line-dark:  rgba(244,241,236,.16);
+  --line-dark-soft: rgba(244,241,236,.08);
+
+  /* Type */
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --serif: "Instrument Serif", "Iowan Old Style", Georgia, "Times New Roman", serif;
+
+  --t-display: clamp(3.1rem, 9.2vw, 10.5rem);
+  --t-xl:      clamp(2.5rem, 6.4vw, 6.4rem);
+  --t-lg:      clamp(1.9rem, 4vw, 3.6rem);
+  --t-md:      clamp(1.35rem, 2.1vw, 1.9rem);
+  --t-body:    clamp(1rem, 1.05vw, 1.075rem);
+  --t-sm:      .875rem;
+  --t-xs:      .6875rem;
+
+  /* Spacing */
+  --gut:       clamp(1.25rem, 4.4vw, 4.5rem);
+  --sec:       clamp(6rem, 15vh, 11rem);
+  --maxw:      1560px;
+
+  /* Motion — one language, used everywhere */
+  --ease:      cubic-bezier(.22,.61,.36,1);
+  --ease-out:  cubic-bezier(.16,1,.3,1);
+  --ease-soft: cubic-bezier(.4,0,.2,1);
+  --dur:       .72s;
+  --dur-slow:  1.15s;
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
+}
+
+/* ---------- 2. RESET & BASE ---------------------------------------------- */
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+body{
+  margin:0;
+  background:var(--ivory);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:var(--t-body);
+  font-weight:400;
+  line-height:1.62;
+  letter-spacing:-.006em;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow-x:clip;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4,p,figure,blockquote,ul,ol,dl,dd{ margin:0; }
+ul,ol{ list-style:none; padding:0; }
+img,video,iframe{ display:block; max-width:100%; }
+img{ height:auto; }
+button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+a{ color:inherit; text-decoration:none; }
+::selection{ background:var(--ink); color:var(--ivory); }
+
+:focus-visible{
+  outline:1px solid var(--accent);
+  outline-offset:4px;
+  border-radius:1px;
+}
+.on-dark :focus-visible{ outline-color:var(--accent-lo); }
+
+.skip{
+  position:fixed; top:0; left:0; z-index:200;
+  padding:.9rem 1.4rem; background:var(--ink); color:var(--ivory);
+  font-size:var(--t-sm); letter-spacing:.02em;
+  transform:translateY(-120%);
+  transition:transform .3s var(--ease);
+}
+.skip:focus{ transform:translateY(0); }
+
+.vh{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* Film grain across the whole page — the single most useful "expensive" cue */
+.grain{
+  position:fixed; inset:0; z-index:120; pointer-events:none;
+  background-image:var(--grain);
+  opacity:.5; mix-blend-mode:multiply;
+}
+
+/* ---------- 3. PRIMITIVES ------------------------------------------------ */
+.wrap{ width:100%; max-width:var(--maxw); margin-inline:auto; padding-inline:var(--gut); }
+
+.grid{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); }
+
+.rule{ height:1px; background:var(--line); border:0; width:100%; }
+.on-dark .rule{ background:var(--line-dark); }
+
+.eyebrow{
+  font-size:var(--t-xs);
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--quiet);
+  font-weight:500;
+  line-height:1;
+}
+.on-dark .eyebrow{ color:rgba(244,241,236,.5); }
+
+.serif{ font-family:var(--serif); font-weight:400; letter-spacing:-.022em; line-height:.98; }
+.italic{ font-style:italic; }
+
+.lede{
+  font-size:clamp(1.05rem,1.35vw,1.28rem);
+  line-height:1.58;
+  color:var(--charcoal);
+  letter-spacing:-.01em;
+  max-width:46ch;
+}
+.on-dark .lede{ color:rgba(244,241,236,.72); }
+
+/* Buttons — a rule that fills, and an arrow that steps forward */
+.btn{
+  --btn-fg:var(--ink); --btn-bg:transparent; --btn-bd:var(--ink);
+  position:relative; display:inline-flex; align-items:center; gap:.85em;
+  padding:1.05em 1.7em;
+  font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase; font-weight:500;
+  color:var(--btn-fg); border:1px solid var(--btn-bd);
+  border-radius:1px; overflow:hidden; isolation:isolate;
+  transition:color .5s var(--ease), border-color .5s var(--ease);
+}
+.btn::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:var(--btn-bd);
+  transform:scaleY(0); transform-origin:bottom;
+  transition:transform .55s var(--ease-out);
+}
+.btn:hover::before,.btn:focus-visible::before{ transform:scaleY(1); }
+.btn:hover,.btn:focus-visible{ color:var(--ivory); }
+.btn .arw{ transition:transform .45s var(--ease-out); }
+.btn:hover .arw,.btn:focus-visible .arw{ transform:translateX(.3em); }
+
+.btn--fill{ --btn-fg:var(--ivory); background:var(--ink); }
+.btn--fill::before{ background:var(--ivory); }
+.btn--fill:hover,.btn--fill:focus-visible{ color:var(--ink); }
+
+.on-dark .btn{ --btn-fg:var(--ivory); --btn-bd:rgba(244,241,236,.4); }
+.on-dark .btn::before{ background:var(--ivory); }
+.on-dark .btn:hover,.on-dark .btn:focus-visible{ color:var(--ink); border-color:var(--ivory); }
+.on-dark .btn--fill{ background:var(--ivory); --btn-fg:var(--ink); border-color:var(--ivory); }
+.on-dark .btn--fill::before{ background:var(--ink); }
+.on-dark .btn--fill:hover,.on-dark .btn--fill:focus-visible{ color:var(--ivory); }
+
+/* Inline link — underline draws in from the left */
+.ln{ position:relative; display:inline-block; }
+.ln::after{
+  content:""; position:absolute; left:0; bottom:-.12em; height:1px; width:100%;
+  background:currentColor; opacity:.45;
+  transform:scaleX(0); transform-origin:right;
+  transition:transform .5s var(--ease-out);
+}
+.ln:hover::after,.ln:focus-visible::after{ transform:scaleX(1); transform-origin:left; }
+
+/* Reveal primitives — driven by IntersectionObserver, never by a timer */
+.rv{ opacity:0; transform:translate3d(0,22px,0); transition:opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out); }
+.rv.in{ opacity:1; transform:none; }
+
+/* Words rise out of a clipped line — used for statement typography */
+.w{ display:inline-block; overflow:hidden; vertical-align:bottom; padding-bottom:.06em; margin-bottom:-.06em; }
+.w > i{
+  display:inline-block; font-style:inherit;
+  transform:translate3d(0,105%,0);
+  transition:transform 1.05s var(--ease-out);
+  transition-delay:var(--d,0ms);
+}
+.in .w > i{ transform:none; }
+
+/* Media plates — images arrive through a clip, never a plain fade */
+.plate{ position:relative; overflow:hidden; background:var(--bone); border-radius:2px; }
+.plate img,.plate video{ width:100%; height:100%; object-fit:cover; }
+.plate--clip img,.plate--clip video{
+  clip-path:inset(0 0 100% 0);
+  transform:scale(1.08);
+  transition:clip-path 1.4s var(--ease-out), transform 1.9s var(--ease-out);
+}
+.in .plate--clip img,.in .plate--clip video,.plate--clip.in img,.plate--clip.in video{
+  clip-path:inset(0 0 0 0); transform:scale(1);
+}
+/* If a remote image fails, the plate still reads as a designed surface */
+.plate.is-empty{ background:linear-gradient(155deg,var(--bone) 0%,var(--bone-deep) 55%,var(--bone) 100%); }
+.plate.is-empty img{ opacity:0; }
+
+/* ---------- 4. NAVIGATION ------------------------------------------------ */
+.nav{
+  position:fixed; inset:0 0 auto 0; z-index:100;
+  padding-block:clamp(1.1rem,2.2vh,1.9rem);
+  color:var(--ivory);
+  transition:color .6s var(--ease), padding-block .6s var(--ease);
+}
+.nav::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:rgba(244,241,236,.82);
+  -webkit-backdrop-filter:blur(16px) saturate(1.4);
+  backdrop-filter:blur(16px) saturate(1.4);
+  border-bottom:1px solid var(--line-soft);
+  opacity:0; transition:opacity .7s var(--ease);
+}
+.nav.is-solid{ color:var(--ink); padding-block:clamp(.85rem,1.6vh,1.25rem); }
+.is-menu .nav{ color:var(--ink); }
+.is-menu .nav::before{ opacity:0; }
+.nav.is-solid::before{ opacity:1; }
+
+.nav__in{ display:flex; align-items:center; justify-content:space-between; gap:var(--gut); }
+
+.brand{ display:flex; align-items:baseline; gap:.7rem; transform-origin:left center; transition:transform .7s var(--ease); }
+.nav.is-solid .brand{ transform:scale(.9); }
+.brand__mark{ font-family:var(--serif); font-size:1.5rem; letter-spacing:.01em; line-height:1; }
+.brand__sub{
+  font-size:var(--t-xs); letter-spacing:.19em; text-transform:uppercase;
+  opacity:.6; white-space:nowrap;
+  transition:opacity .6s var(--ease);
+}
+
+.nav__links{ display:flex; align-items:center; gap:clamp(1.2rem,2.4vw,2.6rem); }
+.nav__links a{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  opacity:.78; transition:opacity .4s var(--ease);
+}
+.nav__links a:hover,.nav__links a:focus-visible{ opacity:1; }
+
+.nav__cta{ display:flex; align-items:center; gap:1rem; }
+.nav .btn{ padding:.85em 1.35em; }
+.nav:not(.is-solid) .btn{ --btn-fg:var(--ivory); --btn-bd:rgba(244,241,236,.45); }
+.nav:not(.is-solid) .btn::before{ background:var(--ivory); }
+.nav:not(.is-solid) .btn:hover,.nav:not(.is-solid) .btn:focus-visible{ color:var(--ink); border-color:var(--ivory); }
+
+/* Compact menu control — mobile only */
+.burger{ display:none; width:2.5rem; height:2.5rem; position:relative; margin-right:-.4rem; }
+.burger span{
+  position:absolute; left:.45rem; right:.45rem; height:1px; background:currentColor;
+  transition:transform .5s var(--ease-out), opacity .3s var(--ease);
+}
+.burger span:nth-child(1){ top:1rem; }
+.burger span:nth-child(2){ bottom:1rem; }
+.is-menu .burger span:nth-child(1){ transform:translateY(.22rem) rotate(31deg); }
+.is-menu .burger span:nth-child(2){ transform:translateY(-.22rem) rotate(-31deg); }
+
+.menu{
+  position:fixed; inset:0; z-index:99;
+  background:var(--ivory); color:var(--ink);
+  display:flex; flex-direction:column; justify-content:center;
+  padding:6rem var(--gut) 3rem;
+  clip-path:inset(0 0 100% 0);
+  transition:clip-path .85s var(--ease-out);
+  visibility:hidden;
+}
+.is-menu .menu{ clip-path:inset(0 0 0 0); visibility:visible; }
+.menu ul a{ font-family:var(--serif); font-size:clamp(2.1rem,9vw,3.4rem); line-height:1.24; letter-spacing:-.02em; }
+.menu li{ overflow:hidden; }
+.menu li > a{ display:block; transform:translateY(110%); transition:transform .8s var(--ease-out); transition-delay:var(--d,0ms); }
+.is-menu .menu li > a{ transform:none; }
+.menu__foot{ margin-top:auto; padding-top:2.5rem; border-top:1px solid var(--line); display:grid; gap:.5rem; font-size:var(--t-sm); color:var(--slate); }
+.menu__foot a{ font-size:var(--t-sm); overflow-wrap:anywhere; }
+
+/* ---------- 5. HERO ------------------------------------------------------ */
+/* The track supplies the scroll timeline; the stage stays viewport-sized and
+   sticky, so the whole sequence is driven by scroll position alone.          */
+.hero{ position:relative; background:var(--ink); }
+.hero__track{ height:320vh; }
+.hero__stage{
+  position:sticky; top:0; height:100svh; overflow:hidden;
+  display:grid; grid-template-rows:1fr auto;
+}
+
+.hero__media{ position:absolute; inset:0; z-index:0; overflow:hidden; background:var(--ink); }
+.hero__media video,.hero__media img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  /* Desaturated so the difference-blend typography above stays neutral */
+  filter:saturate(.2) contrast(1.09) brightness(.62);
+  will-change:transform;
+}
+/* Still-frame sequence: the fallback render path, and the mobile path */
+.hero__stills img{ opacity:0; transition:opacity 1.2s var(--ease); }
+.hero[data-mode="video"] .hero__stills{ display:none; }
+.hero[data-mode="stills"] .hero__video{ display:none; }
+
+.hero__scrim{
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(125% 92% at 46% 6%, rgba(0,0,0,.52) 0%, rgba(0,0,0,0) 66%),
+    linear-gradient(to top, rgba(10,11,12,.7) 0%, rgba(10,11,12,.12) 52%);
+}
+/* The ivory veil that closes the hero and hands off to the section below,
+   so the two read as one continuous composition rather than two blocks. */
+.hero__veil{
+  position:absolute; inset:0; z-index:6; pointer-events:none;
+  background:var(--ivory); opacity:0;
+}
+
+.hero__type{
+  position:relative; z-index:4;
+  align-self:center;
+  width:100%; max-width:var(--maxw); margin-inline:auto; padding-inline:var(--gut);
+  color:var(--ivory);
+}
+.hero__head{
+  font-family:var(--serif); font-weight:400;
+  font-size:var(--t-display); line-height:.94; letter-spacing:-.03em;
+  margin:0; max-width:15ch;
+  mix-blend-mode:difference;      /* type reads against the moving frame */
+  will-change:transform, opacity;
+}
+.hero__head .l{ display:block; will-change:transform; }
+.hero__head .l:nth-child(2){ padding-left:.09em; }
+.hero__head .l:nth-child(3){ padding-left:.02em; }
+.hero__head em{ font-style:italic; }
+
+.hero__sub{
+  margin-top:clamp(1.5rem,3.4vh,2.6rem);
+  max-width:37ch; font-size:clamp(.98rem,1.1vw,1.13rem); line-height:1.6;
+  color:rgba(244,241,236,.8);
+  will-change:transform, opacity;
+}
+
+/* The quiet identity plate that emerges as the headline leaves frame */
+.hero__plate{
+  position:absolute; z-index:5; left:0; right:0; bottom:clamp(6rem,16vh,10rem);
+  padding-inline:var(--gut);
+  max-width:var(--maxw); margin-inline:auto;
+  color:var(--ivory); opacity:0; pointer-events:none;
+  will-change:transform, opacity;
+}
+.hero__plate .nm{ font-family:var(--serif); font-size:clamp(1.6rem,3.4vw,2.9rem); line-height:1.05; }
+.hero__plate .cr{ margin-top:.7rem; font-size:var(--t-xs); letter-spacing:.17em; text-transform:uppercase; color:rgba(244,241,236,.62); max-width:44ch; line-height:1.9; }
+
+.hero__foot{
+  position:relative; z-index:4;
+  width:100%; max-width:var(--maxw); margin-inline:auto; padding:0 var(--gut) clamp(1.6rem,4vh,2.6rem);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:var(--gut);
+  color:rgba(244,241,236,.62);
+}
+.hero__scroll{ display:flex; align-items:center; gap:1rem; font-size:var(--t-xs); letter-spacing:.2em; text-transform:uppercase; will-change:opacity, transform; }
+.hero__scroll .track{ position:relative; width:clamp(48px,7vw,88px); height:1px; background:rgba(244,241,236,.26); overflow:hidden; }
+.hero__scroll .track::after{
+  content:""; position:absolute; inset:0; background:var(--ivory);
+  transform-origin:left; animation:draw 2.9s var(--ease-soft) infinite;
+}
+@keyframes draw{
+  0%{ transform:scaleX(0); transform-origin:left; }
+  42%{ transform:scaleX(1); transform-origin:left; }
+  58%{ transform:scaleX(1); transform-origin:right; }
+  100%{ transform:scaleX(0); transform-origin:right; }
+}
+.hero__loc{ font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase; text-align:right; line-height:1.9; }
+
+/* ---------- 6. SECTIONS -------------------------------------------------- */
+.sec{ position:relative; padding-block:var(--sec); }
+.sec--dark{ background:var(--ink); color:var(--ivory); }
+.sec__head{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); align-items:baseline; margin-bottom:clamp(3rem,8vh,6rem); }
+.sec__head .eyebrow{ grid-column:1 / span 3; }
+.sec__head .ttl{ grid-column:4 / span 8; }
+
+/* --- Introduction ------------------------------------------------------- */
+.intro{ padding-block:clamp(7rem,20vh,15rem); }
+.intro__statement{
+  grid-column:1 / span 10;
+  font-family:var(--serif); font-size:var(--t-xl); line-height:1.02; letter-spacing:-.028em;
+  max-width:18ch;
+}
+.intro__body{ grid-column:7 / span 5; margin-top:clamp(2.5rem,6vh,4.5rem); }
+.intro__meta{ grid-column:1 / span 4; margin-top:clamp(2.5rem,6vh,4.5rem); align-self:end; }
+.intro__meta dt{ font-size:var(--t-xs); letter-spacing:.18em; text-transform:uppercase; color:var(--quiet); }
+.intro__meta dd{ font-size:var(--t-md); font-family:var(--serif); margin-top:.35rem; }
+.intro__meta div + div{ margin-top:1.6rem; padding-top:1.6rem; border-top:1px solid var(--line-soft); }
+
+/* --- Treatments: an editorial list, not a card grid ---------------------- */
+.tr{ border-top:1px solid var(--line); }
+.tr__row{ border-bottom:1px solid var(--line); position:relative; }
+.tr__row::before{
+  content:""; position:absolute; inset:0; z-index:0;
+  background:linear-gradient(90deg, rgba(233,228,218,.7), rgba(233,228,218,.15));
+  opacity:0; transition:opacity .6s var(--ease);
+}
+.tr__row.is-hot::before{ opacity:1; }
+
+.tr__btn{
+  position:relative; z-index:1; width:100%; text-align:left;
+  display:grid; grid-template-columns:5.5rem minmax(0,1fr) minmax(0,1.05fr) 3rem;
+  column-gap:var(--gut); align-items:baseline;
+  padding-block:clamp(1.5rem,3.6vh,2.5rem);
+  transition:padding-block .6s var(--ease), transform .6s var(--ease);
+}
+.tr__row.is-hot .tr__btn{ padding-block:clamp(2rem,4.6vh,3.2rem); }
+
+.tr__idx{ font-size:var(--t-xs); letter-spacing:.14em; color:var(--quiet); transition:transform .6s var(--ease-out), color .5s var(--ease); }
+.tr__row.is-hot .tr__idx{ transform:translateX(.55rem); color:var(--accent); }
+
+.tr__name{
+  font-family:var(--serif); font-size:clamp(1.5rem,3vw,2.6rem); line-height:1.06; letter-spacing:-.022em;
+  transition:transform .7s var(--ease-out);
+}
+.tr__row.is-hot .tr__name{ transform:translateX(.35rem); }
+
+.tr__desc{
+  font-size:var(--t-sm); color:var(--slate); line-height:1.55; max-width:42ch;
+  opacity:.55; transform:translateY(.35rem);
+  transition:opacity .6s var(--ease), transform .6s var(--ease-out);
+}
+.tr__row.is-hot .tr__desc{ opacity:1; transform:none; }
+
+.tr__arw{ justify-self:end; align-self:center; color:var(--quiet); transition:transform .6s var(--ease-out), color .5s var(--ease); }
+.tr__row.is-hot .tr__arw{ transform:translateX(.45rem); color:var(--ink); }
+
+/* Tap-expandable panel — the mobile interaction, also available on desktop */
+.tr__panel{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .8s var(--ease-out); }
+.tr__row[data-open="1"] .tr__panel{ grid-template-rows:1fr; }
+.tr__panel > div{
+  overflow:hidden;
+  /* Collapsed panels must leave the tab order, not just shrink to nothing.
+     The delay holds visibility until the row has finished closing. */
+  visibility:hidden;
+  transition:visibility 0s .8s;
+}
+.tr__row[data-open="1"] .tr__panel > div{ visibility:visible; transition-delay:0s; }
+.tr__panel .inner{
+  display:grid; grid-template-columns:5.5rem minmax(0,1fr); column-gap:var(--gut);
+  padding-bottom:clamp(1.8rem,4vh,2.8rem);
+}
+.tr__panel .body{ grid-column:2; display:grid; gap:1.4rem; max-width:60ch; }
+.tr__panel .plate{ aspect-ratio:16/9; }
+.tr__panel .plate img{ filter:saturate(.62) contrast(1.03); }
+
+/* Floating media that follows the pointer, softly */
+.follow{
+  position:fixed; top:0; left:0; z-index:60; width:clamp(240px,22vw,340px); aspect-ratio:4/5;
+  pointer-events:none; opacity:0; border-radius:3px; overflow:hidden;
+  box-shadow:0 24px 60px -28px rgba(22,23,26,.5);
+  transform:translate3d(-50vw,-50vh,0);
+  transition:opacity .5s var(--ease);
+  will-change:transform, opacity;
+}
+.follow.is-on{ opacity:1; }
+.follow img{ width:100%; height:100%; object-fit:cover; filter:saturate(.62) contrast(1.03); }
+
+/* --- Clinic experience: full-bleed media with slow parallax -------------- */
+.exp{ position:relative; padding:0; background:var(--ink); color:var(--ivory); }
+.exp__media{ position:relative; height:clamp(78vh,105vh,124vh); overflow:hidden; }
+.exp__media img{ position:absolute; inset:-14% 0; width:100%; height:128%; object-fit:cover; filter:saturate(.26) brightness(.5) contrast(1.08); will-change:transform; }
+.exp__media::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(10,11,12,.88) 0%, rgba(10,11,12,.5) 38%, rgba(10,11,12,.2) 72%, rgba(10,11,12,.3) 100%); }
+.exp__type{
+  position:absolute; z-index:2; left:0; right:0; bottom:clamp(3rem,9vh,6rem);
+  max-width:var(--maxw); margin-inline:auto; padding-inline:var(--gut);
+}
+.exp__type h2{ font-family:var(--serif); font-size:var(--t-xl); line-height:1.02; letter-spacing:-.026em; max-width:15ch; }
+.exp__notes{ display:flex; flex-wrap:wrap; gap:clamp(1.4rem,4vw,3.4rem); margin-top:clamp(1.8rem,4vh,2.8rem); padding-top:1.6rem; border-top:1px solid var(--line-dark-soft); }
+.exp__notes li{ font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,241,236,.6); }
+
+/* --- Technology: large numerals, editorial composition ------------------- */
+.tech__item{
+  display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut);
+  padding-block:clamp(2.8rem,7vh,5rem); border-top:1px solid var(--line-dark);
+  align-items:start;
+}
+.tech__item:last-child{ border-bottom:1px solid var(--line-dark); }
+.tech__num{
+  grid-column:1 / span 3;
+  font-family:var(--serif); font-size:clamp(3.4rem,8vw,7.5rem); line-height:.8; letter-spacing:-.03em;
+  color:rgba(244,241,236,.22);
+}
+.tech__name{ grid-column:4 / span 4; font-size:clamp(1.15rem,1.9vw,1.6rem); letter-spacing:-.012em; line-height:1.25; }
+.tech__copy{ grid-column:8 / span 5; color:rgba(244,241,236,.66); font-size:var(--t-sm); line-height:1.7; max-width:44ch; }
+.tech__media{ grid-column:1 / span 12; margin-top:clamp(3rem,8vh,5rem); }
+.tech__media .plate{ aspect-ratio:21/9; background:#26282c; }
+.tech__media img{ filter:saturate(.4) brightness(.86); }
+
+/* --- Before & after ------------------------------------------------------ */
+.cmp{ position:relative; }
+.cmp__stage{
+  position:relative; overflow:hidden; border-radius:2px; background:var(--bone);
+  aspect-ratio:21/9; touch-action:pan-y; cursor:ew-resize; user-select:none;
+}
+.cmp__stage img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 52%; }
+.cmp__after{ position:absolute; inset:0; clip-path:inset(0 0 0 var(--pos,50%)); }
+/* The "before" treatment is a CSS grade, not a clinical photograph */
+.cmp__before img{ filter:saturate(.6) brightness(.9) contrast(.88) sepia(.34); }
+.cmp__lbl{
+  position:absolute; bottom:1.4rem; z-index:3;
+  font-size:var(--t-xs); letter-spacing:.2em; text-transform:uppercase; color:var(--ivory);
+  padding:.55rem .9rem; background:rgba(18,19,21,.44);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  border-radius:1px; pointer-events:none;
+}
+.cmp__lbl--b{ left:1.4rem; } .cmp__lbl--a{ right:1.4rem; }
+.cmp__handle{
+  position:absolute; top:0; bottom:0; z-index:4; width:2px; margin-left:-1px;
+  left:var(--pos,50%); background:rgba(244,241,236,.9);
+  display:grid; place-items:center; cursor:ew-resize;
+}
+.cmp__grip{
+  width:3.1rem; height:3.1rem; border-radius:50%;
+  background:rgba(244,241,236,.94); color:var(--ink);
+  display:grid; place-items:center; letter-spacing:.06em; font-size:.8rem;
+  box-shadow:0 10px 34px -14px rgba(0,0,0,.6);
+  transition:transform .5s var(--ease-out);
+}
+.cmp__handle:hover .cmp__grip,.cmp__handle:focus-visible .cmp__grip{ transform:scale(1.08); }
+.cmp__meta{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--gut); margin-top:1.4rem; flex-wrap:wrap; }
+.note{ font-size:.68rem; letter-spacing:.09em; color:var(--quiet); text-transform:uppercase; }
+.on-dark .note{ color:rgba(244,241,236,.42); }
+
+/* --- Doctor ------------------------------------------------------------- */
+.doc{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); row-gap:clamp(2.5rem,6vh,4rem); }
+.doc__portrait{ grid-column:1 / span 5; }
+.doc__portrait .plate{ aspect-ratio:4/5; }
+.doc__portrait img{ transition:transform 1.6s var(--ease-out), filter 1.2s var(--ease); filter:saturate(.55) contrast(1.02); }
+.doc__portrait:hover img{ transform:scale(1.035); filter:saturate(.75) contrast(1.02); }
+/* Designed placeholder for the portrait slot — no stranger's face stands in
+   for the doctor. Drop a real photograph into CONFIG.media.portrait. */
+.doc__ph{ position:absolute; inset:0; display:grid; place-content:center; text-align:center; gap:1rem;
+  background:linear-gradient(160deg,var(--bone) 0%,var(--bone-deep) 58%,#cdc4b4 100%); }
+.doc__ph::after{ content:""; position:absolute; inset:clamp(.9rem,2.2vw,1.6rem); border:1px solid rgba(22,23,26,.13); }
+.doc__ph .mono{ font-family:var(--serif); font-size:clamp(3.4rem,6vw,5.6rem); line-height:1; color:rgba(22,23,26,.28); letter-spacing:.02em; }
+.doc__ph .cap{ font-size:var(--t-xs); letter-spacing:.19em; text-transform:uppercase; color:rgba(22,23,26,.42); }
+.doc__body{ grid-column:7 / span 6; }
+.doc__name{ font-family:var(--serif); font-size:var(--t-lg); line-height:1.03; letter-spacing:-.024em; }
+.doc__role{ margin-top:.9rem; font-size:var(--t-xs); letter-spacing:.17em; text-transform:uppercase; color:var(--accent); }
+.doc__cred{ margin-top:clamp(1.8rem,4vh,2.6rem); border-top:1px solid var(--line); }
+.doc__cred li{ display:grid; grid-template-columns:9rem 1fr; gap:var(--gut); padding-block:1rem; border-bottom:1px solid var(--line-soft); font-size:var(--t-sm); }
+.doc__cred .k{ font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase; color:var(--quiet); }
+.doc__bio{ margin-top:clamp(1.8rem,4vh,2.6rem); display:grid; gap:1.1rem; color:var(--charcoal); font-size:var(--t-sm); line-height:1.75; max-width:56ch; }
+
+/* --- Patient stories ---------------------------------------------------- */
+.st{ background:var(--bone); }
+.st__stage{ position:relative; min-height:clamp(17rem,32vh,24rem); overflow-x:clip; }
+.st__slide{
+  position:absolute; inset:0; opacity:0; visibility:hidden;
+  transform:translate3d(2.2rem,0,0); filter:blur(7px);
+  transition:opacity .85s var(--ease), transform .95s var(--ease-out), filter .85s var(--ease), visibility 0s .95s;
+}
+.st__slide.is-on{ opacity:1; visibility:visible; transform:none; filter:none; transition-delay:0s; }
+.st__slide.is-prev{ transform:translate3d(-2.2rem,0,0); }
+.st__q{ font-family:var(--serif); font-size:var(--t-lg); line-height:1.14; letter-spacing:-.02em; max-width:22ch; }
+.st__by{ margin-top:clamp(1.4rem,3vh,2rem); font-size:var(--t-xs); letter-spacing:.17em; text-transform:uppercase; color:var(--slate); }
+.st__nav{ display:flex; align-items:center; gap:1.6rem; margin-top:clamp(2.4rem,5vh,3.4rem); }
+.st__btn{ width:3rem; height:3rem; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; transition:background .5s var(--ease), color .5s var(--ease), border-color .5s var(--ease); }
+.st__btn:hover,.st__btn:focus-visible{ background:var(--ink); color:var(--ivory); border-color:var(--ink); }
+.st__count{ font-size:var(--t-xs); letter-spacing:.16em; color:var(--quiet); font-variant-numeric:tabular-nums; }
+
+/* --- Appointment + contact: the film fades down to graphite -------------- */
+.close{ background:var(--ink); color:var(--ivory); position:relative; }
+.close::before{
+  content:""; position:absolute; top:1px; left:0; right:0; height:clamp(7rem,19vh,14rem);
+  background:linear-gradient(to bottom,
+    rgba(233,228,218,1) 0%,
+    rgba(200,195,184,1) 32%,
+    rgba(128,126,120,1) 61%,
+    rgba(57,58,58,1) 84%,
+    rgba(22,23,26,1) 100%);
+  transform:translateY(-100%); pointer-events:none;
+}
+.cta{ padding-block:clamp(6rem,16vh,12rem) clamp(3rem,8vh,5rem); }
+.cta__h{ font-family:var(--serif); font-size:var(--t-xl); line-height:1.0; letter-spacing:-.028em; max-width:14ch; }
+.cta__actions{ display:flex; flex-wrap:wrap; gap:1rem; margin-top:clamp(2.2rem,5vh,3.2rem); }
+
+/* --- Form --------------------------------------------------------------- */
+.form{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); row-gap:clamp(1.4rem,3vh,2rem); }
+.f{ position:relative; grid-column:span 6; display:grid; gap:.5rem; }
+.f--full{ grid-column:span 12; }
+.f--third{ grid-column:span 4; }
+.f label{ font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,241,236,.55); }
+.f input,.f select,.f textarea{
+  font:inherit; font-size:var(--t-sm); color:var(--ivory);
+  background:transparent; border:0; border-bottom:1px solid var(--line-dark);
+  padding:.85rem 0; border-radius:0;
+  transition:border-color .5s var(--ease), background .5s var(--ease);
+  width:100%;
+}
+.f textarea{ resize:vertical; min-height:5.5rem; }
+.f select{ -webkit-appearance:none; appearance:none; background-image:linear-gradient(45deg,transparent 50%,rgba(244,241,236,.6) 50%),linear-gradient(135deg,rgba(244,241,236,.6) 50%,transparent 50%); background-position:right 4px center,right 0 center; background-size:5px 5px,5px 5px; background-repeat:no-repeat; }
+.f select option{ background:var(--ink); color:var(--ivory); }
+.f input:focus,.f select:focus,.f textarea:focus{ outline:none; border-color:var(--ivory); }
+.f input::placeholder,.f textarea::placeholder{ color:rgba(244,241,236,.3); }
+.f .err{ font-size:.72rem; letter-spacing:.04em; color:#E2A08A; min-height:1em; opacity:0; transform:translateY(-.2rem); transition:opacity .35s var(--ease), transform .35s var(--ease); }
+.f[data-invalid="1"] .err{ opacity:1; transform:none; }
+.f[data-invalid="1"] input,.f[data-invalid="1"] select,.f[data-invalid="1"] textarea{ border-color:#E2A08A; }
+.form__foot{ grid-column:span 12; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1.4rem; margin-top:1rem; }
+
+.done{ grid-column:1 / -1; }
+.done__in{ max-width:44ch; }
+.done h3{ font-family:var(--serif); font-size:var(--t-lg); line-height:1.05; letter-spacing:-.02em; }
+.done p{ margin-top:1.1rem; color:rgba(244,241,236,.68); font-size:var(--t-sm); line-height:1.7; }
+[hidden]{ display:none !important; }
+
+/* --- Contact ------------------------------------------------------------ */
+.ct__grid{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); row-gap:clamp(2.4rem,6vh,4rem); }
+.ct__col{ grid-column:span 3; }
+.ct__col h3{ font-size:var(--t-xs); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,241,236,.5); font-weight:500; }
+.ct__col .v{ margin-top:1.1rem; font-size:var(--t-sm); line-height:1.85; color:rgba(244,241,236,.86); }
+.ct__map{ grid-column:span 12; margin-top:clamp(1rem,3vh,2rem); position:relative; border:1px solid var(--line-dark); border-radius:2px; overflow:hidden; background:#1b1d21; }
+.ct__map iframe{ width:100%; height:clamp(19rem,44vh,30rem); border:0; filter:grayscale(1) invert(.92) contrast(.86) brightness(1.05); }
+.ct__quick{ display:none; gap:.75rem; margin-top:1.4rem; }
+
+/* ---------- 7. FOOTER ---------------------------------------------------- */
+.ft{ background:var(--ink); color:var(--ivory); padding-block:clamp(3.5rem,9vh,6rem) clamp(2rem,5vh,3rem); }
+.ft__top{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:var(--gut); row-gap:2.6rem; padding-bottom:clamp(2.5rem,6vh,4rem); border-bottom:1px solid var(--line-dark); }
+.ft__brand{ grid-column:span 5; }
+.ft__brand .m{ font-family:var(--serif); font-size:clamp(1.9rem,3.4vw,2.8rem); line-height:1; }
+.ft__brand p{ margin-top:1rem; color:rgba(244,241,236,.6); font-size:var(--t-sm); max-width:26ch; }
+.ft__col{ grid-column:span 2; }
+.ft__col h4{ font-size:var(--t-xs); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,241,236,.45); font-weight:500; }
+.ft__col ul{ margin-top:1.1rem; display:grid; gap:.6rem; font-size:var(--t-sm); color:rgba(244,241,236,.82); }
+.ft__soc{ display:flex; gap:.75rem; margin-top:1.2rem; }
+.ft__soc a{ width:2.4rem; height:2.4rem; border:1px solid var(--line-dark); border-radius:50%; display:grid; place-items:center; transition:background .45s var(--ease), color .45s var(--ease), border-color .45s var(--ease); }
+.ft__soc a:hover,.ft__soc a:focus-visible{ background:var(--ivory); color:var(--ink); border-color:var(--ivory); }
+.ft__bot{ display:flex; flex-wrap:wrap; gap:1rem 2rem; justify-content:space-between; padding-top:1.6rem; font-size:var(--t-xs); letter-spacing:.08em; color:rgba(244,241,236,.45); }
+.ft__bot ul{ display:flex; gap:1.6rem; }
+
+/* ---------- 8. RESPONSIVE ------------------------------------------------
+   Below 900px this is a different composition, not a squeezed desktop one:
+   the hero timeline shortens, the video plays rather than scrubs, hover
+   states become taps, and the grid collapses to a single measured column. */
+@media (max-width: 1180px){
+  .intro__statement{ grid-column:1 / span 12; }
+  .intro__body{ grid-column:1 / span 7; }
+  .intro__meta{ grid-column:9 / span 4; }
+  .doc__portrait{ grid-column:1 / span 6; }
+  .doc__body{ grid-column:7 / span 6; }
+  .tech__num{ grid-column:1 / span 2; }
+  .tech__name{ grid-column:3 / span 4; }
+  .tech__copy{ grid-column:7 / span 6; }
+  .ct__col{ grid-column:span 6; }
+  .ft__brand{ grid-column:span 12; }
+  .ft__col{ grid-column:span 4; }
+  .tr__btn{ grid-template-columns:4rem minmax(0,1fr) minmax(0,.9fr) 2rem; }
+}
+
+@media (max-width: 900px){
+  :root{ --t-body:1rem; --sec:clamp(4.5rem,11vh,7rem); }
+  body{ line-height:1.6; }
+
+  .nav__links,.nav__cta .btn{ display:none; }
+  .burger{ display:block; }
+  .brand__sub{ display:none; }
+
+  /* Shorter timeline: the same choreography, fewer beats */
+  .hero__track{ height:210vh; }
+  .hero__head{ font-size:clamp(2.9rem,13vw,4.6rem); max-width:12ch; }
+  .hero__head .l:nth-child(2),.hero__head .l:nth-child(3){ padding-left:0; }
+  .hero__sub{ max-width:30ch; font-size:1rem; }
+  .hero__media video,.hero__media img{ object-position:58% center; }
+  .hero__loc{ display:none; }
+  .hero__plate{ bottom:clamp(5rem,14vh,7rem); }
+
+  .sec__head{ row-gap:1.6rem; }
+  .sec__head .eyebrow{ grid-column:1 / -1; }
+  .sec__head .ttl{ grid-column:1 / -1; }
+
+  .intro__statement,.intro__body,.intro__meta{ grid-column:1 / -1; }
+  .intro__body{ margin-top:2rem; }
+  .intro__meta{ margin-top:2.6rem; }
+
+  .tr__btn{ grid-template-columns:2.6rem 1fr 1.6rem; padding-block:1.35rem; row-gap:.5rem; }
+  .tr__row.is-hot .tr__btn{ padding-block:1.35rem; }
+  .tr__desc{ display:none; }
+  .tr__arw{ align-self:center; }
+  .tr__panel .inner{ grid-template-columns:1fr; }
+  .tr__panel .body{ grid-column:1; }
+  .tr__row::before{ display:none; }
+  /* Chevron rotates to mark the open state on touch */
+  .tr__arw svg{ transition:transform .6s var(--ease-out); }
+  .tr__row[data-open="1"] .tr__arw svg{ transform:rotate(90deg); }
+
+  .exp__media{ height:78svh; }
+  .exp__notes{ gap:.9rem 1.6rem; }
+
+  .tech__item{ row-gap:.9rem; }
+  .tech__num{ grid-column:1 / -1; font-size:clamp(2.6rem,13vw,3.6rem); }
+  .tech__name{ grid-column:1 / -1; }
+  .tech__copy{ grid-column:1 / -1; }
+  .tech__media .plate{ aspect-ratio:4/3; }
+
+  .cmp__stage{ aspect-ratio:4/5; }
+  .cmp__lbl{ bottom:1rem; } .cmp__lbl--b{ left:1rem; } .cmp__lbl--a{ right:1rem; }
+
+  .doc__portrait,.doc__body{ grid-column:1 / -1; }
+  .doc__cred li{ grid-template-columns:1fr; gap:.2rem; }
+
+  .st__q{ max-width:none; }
+  .st__stage{ min-height:22rem; }
+
+  .f,.f--third{ grid-column:span 12; }
+  .ct__col{ grid-column:span 12; }
+  .ct__quick{ display:flex; }
+  .ct__map iframe{ height:16rem; }
+
+  .ft__col{ grid-column:span 6; }
+  .ft__bot{ flex-direction:column; }
+}
+
+@media (max-width: 520px){
+  .hero__foot{ align-items:center; }
+  .cta__actions .btn{ width:100%; justify-content:space-between; }
+  .form__foot .btn{ width:100%; justify-content:space-between; }
+}
+
+/* Pointer-based refinement rather than width guesses */
+@media (hover: none){
+  .follow{ display:none; }
+}
+
+/* ---------- 9. REDUCED MOTION -------------------------------------------
+   Cinematic behaviour is a layer on top of a site that already works.
+   With reduce set, the timeline collapses and everything simply appears. */
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{
+    animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.14s !important; scroll-behavior:auto !important;
+  }
+  .hero__track{ height:100svh; }
+  .hero__stage{ position:relative; }
+  .hero__head{ mix-blend-mode:normal; }
+  .hero__scroll .track::after{ animation:none; transform:scaleX(1); }
+  .rv{ opacity:1; transform:none; }
+  .w > i{ transform:none; }
+  .plate--clip img,.plate--clip video{ clip-path:none; transform:none; }
+  .grain{ display:none; }
+}
+
+/* ---------- 10. LATE RULES ----------------------------------------------- */
+.hero__media{ will-change:transform; }
+.hero__stills{ position:absolute; inset:0; }
+.hero__stills img:first-child{ opacity:1; }
+
+/* Third headline line sits smaller — editorial contrast inside one statement */
+.hero__head .l--sm{ font-size:.5em; margin-top:.24em; letter-spacing:-.018em; }
+.hero__head .w > i{ transition-delay:var(--d,0ms); }
+.hero.is-ready .hero__head .w > i{ transform:none; }
+
+/* The navigation recedes during the hero rather than restyling outright */
+.nav__links{ transition:opacity .6s var(--ease); }
+.nav.is-tucked .nav__links{ opacity:.5; }
+.nav.is-tucked .brand{ transform:scale(.94); }
+.nav.is-tucked:not(.is-solid) .btn{ background:rgba(244,241,236,.09); border-color:rgba(244,241,236,.7); }
+
+.cmp__before{ position:absolute; inset:0; }
+.menu{ overflow-y:auto; }
+.no-scroll, .no-scroll body{ overflow:hidden; }
+
+@media (prefers-reduced-motion: reduce){
+  .follow{ display:none; }
+  .hero.is-ready .hero__head .w > i,.hero__head .w > i{ transform:none; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============================ NAVIGATION ============================ -->
+<header class="nav" id="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="#top" aria-label="Nayar Dental — home">
+      <span class="brand__mark">Nayar</span>
+      <span class="brand__sub">Dental&nbsp;Studio</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#top">Home</a>
+      <a href="#about">About</a>
+      <a href="#treatments">Treatments</a>
+      <a href="#doctor">Doctors</a>
+      <a href="#results">Results</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="nav__cta">
+      <a class="btn" href="#appointment">
+        Book an appointment
+        <svg class="arw" width="14" height="8" viewBox="0 0 14 8" fill="none" aria-hidden="true"><path d="M0 4h12M9 1l3 3-3 3" stroke="currentColor" stroke-width="1"/></svg>
+      </a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="menu" id="menu" aria-label="Mobile" inert>
+  <ul>
+    <li style="--d:60ms"><a href="#about">About</a></li>
+    <li style="--d:110ms"><a href="#treatments">Treatments</a></li>
+    <li style="--d:160ms"><a href="#experience">The clinic</a></li>
+    <li style="--d:210ms"><a href="#results">Results</a></li>
+    <li style="--d:260ms"><a href="#doctor">Doctors</a></li>
+    <li style="--d:310ms"><a href="#appointment">Book</a></li>
+  </ul>
+  <div class="menu__foot">
+    <a class="ln" href="tel:+911140000000" data-clinic="phone">+91 11 4000 0000</a>
+    <a class="ln" href="mailto:appointments@nayardental.example" data-clinic="email">appointments@nayardental.example</a>
+    <span>Mon–Sat, 9:00 – 19:00</span>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ============================== HERO ================================
+     The track below supplies ~320vh of scroll. The stage inside it is
+     sticky and viewport-sized, so scrolling advances a timeline rather
+     than moving a block past the screen. All values are read once per
+     frame by the ticker in the script at the foot of this file.
+     Swap the footage in CONFIG.media.hero — nothing else needs to change.
+     =================================================================== -->
+<section class="hero" id="top" data-mode="video">
+  <div class="hero__track" id="heroTrack">
+    <div class="hero__stage">
+
+      <div class="hero__media">
+        <video class="hero__video" id="heroVideo" muted loop playsinline autoplay preload="auto"
+               poster="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1600&q=60&fm=jpg"
+               aria-hidden="true" tabindex="-1"></video>
+
+        <!-- Second render path: a still sequence, cross-faded on the same
+             timeline. Used when the video cannot load or cannot be seeked. -->
+        <div class="hero__stills" id="heroStills" aria-hidden="true">
+          <img alt="" src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1800&q=65&fm=jpg">
+          <img alt="" src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=1800&q=65&fm=jpg">
+          <img alt="" src="https://images.unsplash.com/photo-1728342057953-94bfad8f0e7e?w=1800&q=65&fm=jpg">
+          <img alt="" src="https://images.unsplash.com/photo-1445527815219-ecbfec67492e?w=1800&q=65&fm=jpg">
+        </div>
+      </div>
+
+      <div class="hero__scrim" aria-hidden="true"></div>
+
+      <div class="hero__type">
+        <h1 class="hero__head" id="heroHead">
+          <span class="l" data-l="0"><span class="w"><i>Precision</i></span></span>
+          <span class="l" data-l="1"><span class="w"><i>dentistry.</i></span></span>
+          <span class="l l--sm" data-l="2"><span class="w"><i>Quietly</i></span> <span class="w"><i><em>exceptional.</em></i></span></span>
+        </h1>
+        <p class="hero__sub" id="heroSub">
+          Thoughtful dentistry, advanced technology, and exceptional care — designed around you.
+        </p>
+      </div>
+
+      <!-- The state that emerges as the headline leaves frame -->
+      <div class="hero__plate" id="heroPlate" aria-hidden="true">
+        <div class="nm">Dr. Sanjna Nayar</div>
+        <div class="cr">BDS · MDS Prosthodontics &amp; Implantology · PhD Dental Implantology · Fellow, ICOI (USA)</div>
+      </div>
+
+      <div class="hero__veil" id="heroVeil" aria-hidden="true"></div>
+
+      <div class="hero__foot">
+        <div class="hero__scroll" id="heroScroll">
+          <span>Scroll to explore</span>
+          <span class="track" aria-hidden="true"></span>
+        </div>
+        <p class="hero__loc">New Delhi<br>Prosthodontics &amp; Implantology</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================== INTRODUCTION ============================ -->
+<section class="sec intro" id="about">
+  <div class="wrap grid rv" data-rv>
+    <h2 class="intro__statement" data-words>Dentistry should feel personal.</h2>
+
+    <div class="intro__body">
+      <p class="lede">
+        We combine clinical precision, thoughtful design, and modern technology to make every
+        visit feel considered.
+      </p>
+      <p class="lede" style="margin-top:1.4rem; font-size:var(--t-sm); color:var(--slate)">
+        The practice is small by intention. Appointments are unhurried, treatment is planned
+        before it begins, and you are told what we are doing and why at every stage.
+      </p>
+    </div>
+
+    <dl class="intro__meta">
+      <div>
+        <dt>Discipline</dt>
+        <dd>Prosthodontics &amp; Implantology</dd>
+      </div>
+      <div>
+        <dt>In practice since</dt>
+        <dd>1992</dd>
+      </div>
+      <div>
+        <dt>Dental Council registration</dt>
+        <dd>DCI&#8209;3083</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================ TREATMENTS ===========================
+     An editorial list. Each row is a real button that expands a panel,
+     so the interaction works identically with a mouse, a finger and a
+     keyboard. On pointer devices, hovering also lifts the row and calls
+     a floating still into view.
+     =================================================================== -->
+<section class="sec" id="treatments">
+  <div class="wrap">
+    <div class="sec__head rv" data-rv>
+      <p class="eyebrow">Treatments</p>
+      <h2 class="ttl serif" style="font-size:var(--t-lg); max-width:20ch">Care planned around the whole mouth, not a single tooth.</h2>
+    </div>
+
+    <ul class="tr" id="treatList">
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1606811856475-5e6fcdc6e509?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp1">
+          <span class="tr__idx">01</span>
+          <span class="tr__name">Preventive Dentistry</span>
+          <span class="tr__desc">Examinations, hygiene and early intervention, planned around long-term oral health.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp1"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Dental examination instruments on a pale surface" src="https://images.unsplash.com/photo-1606811856475-5e6fcdc6e509?w=1200&q=65&fm=jpg"></div>
+            <p>A full examination, professional cleaning, and radiographs where they are needed. We record what we see so that change can be measured over years rather than guessed at.</p>
+            <a class="ln" href="#appointment">Book a check-up</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1677026010083-78ec7f1b84ed?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp2">
+          <span class="tr__idx">02</span>
+          <span class="tr__name">Teeth Whitening</span>
+          <span class="tr__desc">Supervised whitening with shade matching, calibrated to your enamel.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp2"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Close-up of a natural smile" src="https://images.unsplash.com/photo-1677026010083-78ec7f1b84ed?w=1200&q=65&fm=jpg"></div>
+            <p>In-clinic and take-home options, chosen after we check the health of the gums and the condition of existing restorations. Results vary between patients, and we will tell you honestly what to expect.</p>
+            <a class="ln" href="#appointment">Ask about whitening</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1593022356769-11f762e25ed9?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp3">
+          <span class="tr__idx">03</span>
+          <span class="tr__name">Dental Implants</span>
+          <span class="tr__desc">Single and full-arch restoration, planned from three-dimensional imaging.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp3"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Anatomical model showing a dental implant" src="https://images.unsplash.com/photo-1593022356769-11f762e25ed9?w=1200&q=65&fm=jpg"></div>
+            <p>The practice&rsquo;s principal discipline. Placement is planned digitally against bone volume and the final restoration, so the implant is positioned for the tooth it will eventually carry.</p>
+            <a class="ln" href="#appointment">Arrange an implant consultation</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1564420228450-d9a5bc8d6565?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp4">
+          <span class="tr__idx">04</span>
+          <span class="tr__name">Clear Aligners</span>
+          <span class="tr__desc">Discreet alignment with digitally planned stages and regular review.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp4"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Clear removable aligners held in the hand" src="https://images.unsplash.com/photo-1564420228450-d9a5bc8d6565?w=1200&q=65&fm=jpg"></div>
+            <p>Invisalign and comparable aligner systems for adults and older teenagers. We plan the sequence digitally, then review progress in person rather than by photograph alone.</p>
+            <a class="ln" href="#appointment">Discuss aligners</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp5">
+          <span class="tr__idx">05</span>
+          <span class="tr__name">Root Canal Treatment</span>
+          <span class="tr__desc">Endodontic care under magnification, usually completed in one or two visits.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp5"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Clinicians working together during a dental procedure" src="https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=1200&q=65&fm=jpg"></div>
+            <p>Treatment under local anaesthetic with magnification and apex location. Most patients describe it as comparable to a routine filling appointment.</p>
+            <a class="ln" href="#appointment">Book an assessment</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1654373535457-383a0a4d00f9?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp6">
+          <span class="tr__idx">06</span>
+          <span class="tr__name">Cosmetic Dentistry</span>
+          <span class="tr__desc">Veneers, bonding and contouring, proportioned to the face rather than a template.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp6"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Close study of tooth shape and proportion" src="https://images.unsplash.com/photo-1654373535457-383a0a4d00f9?w=1200&q=65&fm=jpg"></div>
+            <p>Porcelain veneers, composite bonding and reshaping. We prefer the most conservative option that achieves the result, and we will say so when no treatment is the better answer.</p>
+            <a class="ln" href="#appointment">Talk it through</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1609840113564-ab4aba4956c4?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp7">
+          <span class="tr__idx">07</span>
+          <span class="tr__name">Children&rsquo;s Dentistry</span>
+          <span class="tr__desc">Unhurried appointments that build familiarity before they build treatment.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp7"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="A child brushing their teeth" src="https://images.unsplash.com/photo-1609840113564-ab4aba4956c4?w=1200&q=65&fm=jpg"></div>
+            <p>First visits are short and mostly conversation. Prevention, sealants and habit advice come before anything else, and parents stay in the room.</p>
+            <a class="ln" href="#appointment">Book a first visit</a>
+          </div>
+        </div></div></div>
+      </li>
+
+      <li class="tr__row" data-media="https://images.unsplash.com/photo-1489278353717-f64c6ee8a4d2?w=900&q=65&fm=jpg">
+        <button class="tr__btn" aria-expanded="false" aria-controls="tp8">
+          <span class="tr__idx">08</span>
+          <span class="tr__name">Smile Makeovers</span>
+          <span class="tr__desc">A staged plan combining restorative and cosmetic work, previewed before we begin.</span>
+          <span class="tr__arw" aria-hidden="true"><svg width="16" height="10" viewBox="0 0 16 10" fill="none"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg></span>
+        </button>
+        <div class="tr__panel" id="tp8"><div><div class="inner">
+          <div class="body">
+            <div class="plate plate--clip"><img loading="lazy" decoding="async" alt="Portrait of a person smiling" src="https://images.unsplash.com/photo-1489278353717-f64c6ee8a4d2?w=1200&q=65&fm=jpg"></div>
+            <p>Where several disciplines meet. We plan the sequence in full, show you a digital preview, and agree the stages and cost before any treatment starts.</p>
+            <a class="ln" href="#appointment">Start with a consultation</a>
+          </div>
+        </div></div></div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- Floating still that follows the pointer across the treatment list -->
+<div class="follow" id="follow" aria-hidden="true"><img id="followImg" alt=""></div>
+
+<!-- ========================= CLINIC EXPERIENCE ======================== -->
+<section class="exp" id="experience" aria-labelledby="expTitle">
+  <div class="exp__media" data-parallax data-depth="0.16">
+    <img decoding="async" alt="A quiet, brightly lit treatment room with two dental chairs"
+         src="https://images.unsplash.com/photo-1445527815219-ecbfec67492e?w=2000&q=68&fm=jpg">
+  </div>
+  <div class="exp__type on-dark rv" data-rv>
+    <p class="eyebrow" style="margin-bottom:1.4rem">The clinic</p>
+    <h2 id="expTitle" data-words>Designed around your comfort.</h2>
+    <ul class="exp__notes">
+      <li>Single-patient treatment rooms</li>
+      <li>Instrument sterilisation on site</li>
+      <li>Natural light where possible</li>
+      <li>Step-free access</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ TECHNOLOGY =========================== -->
+<section class="sec sec--dark on-dark" id="technology">
+  <div class="wrap">
+    <div class="sec__head rv" data-rv>
+      <p class="eyebrow">Technology</p>
+      <h2 class="ttl serif" style="font-size:var(--t-lg); max-width:19ch">Equipment matters only in what it lets us see.</h2>
+    </div>
+
+    <div class="tech">
+      <article class="tech__item rv" data-rv>
+        <p class="tech__num">01</p>
+        <h3 class="tech__name">Digital precision</h3>
+        <p class="tech__copy">Intraoral scanning and 3D imaging let us plan treatment against the actual anatomy rather than an impression and an estimate. Fewer appointments, fewer surprises mid-treatment.</p>
+      </article>
+
+      <article class="tech__item rv" data-rv>
+        <p class="tech__num">02</p>
+        <h3 class="tech__name">Comfort first</h3>
+        <p class="tech__copy">Digital impressions replace most trays. Procedures are shorter, anaesthesia is targeted, and you are told what happens next before it happens.</p>
+      </article>
+
+      <article class="tech__item rv" data-rv>
+        <p class="tech__num">03</p>
+        <h3 class="tech__name">Sterilisation</h3>
+        <p class="tech__copy">Instruments are cleaned, pouched, autoclaved and logged against each cycle. Single-use items are exactly that. The process is documented and available to see.</p>
+      </article>
+
+      <article class="tech__item rv" data-rv>
+        <p class="tech__num">04</p>
+        <h3 class="tech__name">Treatment planning</h3>
+        <p class="tech__copy">Implant position, crown shape and bite are modelled before anything is prepared, so the plan can be reviewed with you and adjusted while it is still only a plan.</p>
+      </article>
+
+      <div class="tech__media rv" data-rv>
+        <div class="plate plate--clip">
+          <img loading="lazy" decoding="async" alt="A clinician reviewing a three-dimensional dental scan on a tablet"
+               src="https://images.unsplash.com/photo-1600170311833-c2cf5280ce49?w=1800&q=68&fm=jpg">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================== BEFORE &amp; AFTER ========================= -->
+<section class="sec" id="results" style="background:var(--paper)">
+  <div class="wrap">
+    <div class="sec__head rv" data-rv>
+      <p class="eyebrow">Results</p>
+      <h2 class="ttl serif" style="font-size:var(--t-lg); max-width:18ch">Change that looks like nothing was done at all.</h2>
+    </div>
+
+    <div class="cmp rv" data-rv>
+      <!-- PLACEHOLDER GALLERY.
+           Both layers are the same stock photograph; the "before" side is a
+           CSS grade, not a clinical record. Replace with the practice's own
+           consented case photography and remove the note below. -->
+      <div class="cmp__stage" id="cmpStage" style="--pos:50%">
+        <div class="cmp__before">
+          <img decoding="async" alt="Smile before treatment" src="https://images.unsplash.com/photo-1654373535457-383a0a4d00f9?w=1800&q=68&fm=jpg">
+        </div>
+        <div class="cmp__after">
+          <img decoding="async" alt="Smile after treatment" src="https://images.unsplash.com/photo-1654373535457-383a0a4d00f9?w=1800&q=68&fm=jpg">
+        </div>
+        <span class="cmp__lbl cmp__lbl--b">Before</span>
+        <span class="cmp__lbl cmp__lbl--a">After</span>
+        <div class="cmp__handle" id="cmpHandle" role="slider" tabindex="0"
+             aria-label="Reveal the result. Use the left and right arrow keys."
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent">
+          <span class="cmp__grip" aria-hidden="true">
+            <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><path d="M7 1.5 3.5 5 7 8.5M13 1.5 16.5 5 13 8.5" stroke="currentColor" stroke-width="1"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="cmp__meta">
+        <p class="eyebrow">Case 01 &nbsp;·&nbsp; Porcelain veneers, upper anteriors</p>
+        <p class="note">Illustrative placeholder — replace with the practice&rsquo;s own consented case photography</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== DOCTOR ============================= -->
+<section class="sec" id="doctor">
+  <div class="wrap">
+    <div class="sec__head rv" data-rv>
+      <p class="eyebrow">The practice</p>
+      <h2 class="ttl serif" style="font-size:var(--t-lg); max-width:17ch">One clinician, from the first consultation to the last review.</h2>
+    </div>
+
+    <article class="doc rv" data-rv>
+      <div class="doc__portrait">
+        <div class="plate plate--clip" id="docPlate">
+          <!-- A real portrait goes in CONFIG.media.portrait. Until one is
+               supplied, this designed plate stands in — no stock face is
+               presented as the doctor. -->
+          <img id="docImg" alt="Dr. Sanjna Nayar" hidden>
+          <div class="doc__ph" id="docPh">
+            <span class="mono">SN</span>
+            <span class="cap">Portrait to follow</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc__body">
+        <h3 class="doc__name">Dr. Sanjna Nayar</h3>
+        <p class="doc__role">Prosthodontics &amp; Implantology</p>
+
+        <div class="doc__bio">
+          <p>Dr. Nayar&rsquo;s work centres on replacing and restoring teeth — implants, crowns, bridges and full-arch rehabilitation — and on the planning that decides whether those results hold up over a decade.</p>
+          <p>She previously served as Professor and Head of the Department of Prosthodontics at Sree Balaji Dental College and Hospital, Chennai, and directs the Edentulism and Anodontia Research Centre. Teaching has left its mark on how she practises: treatment is explained in full, and the reasoning is offered alongside the recommendation.</p>
+          <p>Consultations are held in English, Hindi, Punjabi or Tamil.</p>
+        </div>
+
+        <ul class="doc__cred">
+          <li><span class="k">Qualifications</span><span>BDS · MDS, Prosthodontics &amp; Implantology · PhD, Dental Implantology</span></li>
+          <li><span class="k">Fellowships</span><span>Fellow, ICOI (USA) · Master, Prosthetic Section of Implants, ICOI (USA)</span></li>
+          <li><span class="k">Experience</span><span>33 years in clinical practice</span></li>
+          <li><span class="k">Registration</span><span>Dental Council of India — DCI&#8209;3083</span></li>
+          <li><span class="k">Consulting at</span><span>Apollo Hospitals Indraprastha, New Delhi</span></li>
+        </ul>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- =========================== PATIENT STORIES ======================= -->
+<section class="sec st" id="stories" aria-roledescription="carousel" aria-label="Patient stories">
+  <div class="wrap">
+    <div class="sec__head rv" data-rv>
+      <p class="eyebrow">Patient stories</p>
+    </div>
+
+    <!-- PLACEHOLDER COPY. Replace with real, consented patient feedback. -->
+    <div class="st__stage rv" data-rv id="stStage" aria-live="polite">
+      <figure class="st__slide is-on">
+        <blockquote class="st__q serif">&ldquo;For the first time, visiting the dentist actually felt calm.&rdquo;</blockquote>
+        <figcaption class="st__by">— R. M., New Delhi &nbsp;·&nbsp; Implant restoration</figcaption>
+      </figure>
+      <figure class="st__slide">
+        <blockquote class="st__q serif">&ldquo;She told me what she would not do, and why. I hadn&rsquo;t had that before.&rdquo;</blockquote>
+        <figcaption class="st__by">— A. S., Noida &nbsp;·&nbsp; Consultation</figcaption>
+      </figure>
+      <figure class="st__slide">
+        <blockquote class="st__q serif">&ldquo;Two visits, no fuss, and the crown matches the tooth beside it exactly.&rdquo;</blockquote>
+        <figcaption class="st__by">— P. K., Gurugram &nbsp;·&nbsp; Crown</figcaption>
+      </figure>
+      <figure class="st__slide">
+        <blockquote class="st__q serif">&ldquo;My daughter asked when she could come back. That was not the reaction I expected.&rdquo;</blockquote>
+        <figcaption class="st__by">— N. B., New Delhi &nbsp;·&nbsp; Children&rsquo;s dentistry</figcaption>
+      </figure>
+    </div>
+
+    <div class="st__nav">
+      <button class="st__btn" id="stPrev" aria-label="Previous story">
+        <svg width="16" height="10" viewBox="0 0 16 10" fill="none" aria-hidden="true"><path d="M16 5H3M6 1.5 2.5 5 6 8.5" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <button class="st__btn" id="stNext" aria-label="Next story">
+        <svg width="16" height="10" viewBox="0 0 16 10" fill="none" aria-hidden="true"><path d="M0 5h13M10 1.5 13.5 5 10 8.5" stroke="currentColor" stroke-width="1"/></svg>
+      </button>
+      <span class="st__count" id="stCount">01 / 04</span>
+      <span class="note" style="margin-left:auto">Placeholder copy — replace with consented patient feedback</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APPOINTMENT · CONTACT · FOOTER ==================
+     The last third of the page settles into graphite — the film fading
+     down rather than a new block starting.
+     =================================================================== -->
+<div class="close on-dark">
+
+  <section class="sec cta" id="appointment">
+    <div class="wrap grid">
+      <div style="grid-column:1 / span 7" class="rv" data-rv>
+        <p class="eyebrow" style="margin-bottom:1.6rem">Appointments</p>
+        <h2 class="cta__h" data-words>Your next visit starts here.</h2>
+        <p class="lede" style="margin-top:1.8rem">
+          Book a consultation and discover a more thoughtful approach to dentistry.
+        </p>
+        <div class="cta__actions">
+          <a class="btn btn--fill" href="#apptForm">
+            Book an appointment
+            <svg class="arw" width="14" height="8" viewBox="0 0 14 8" fill="none" aria-hidden="true"><path d="M0 4h12M9 1l3 3-3 3" stroke="currentColor" stroke-width="1"/></svg>
+          </a>
+          <a class="btn" href="tel:+911140000000" data-clinic="phone-href">
+            Call the clinic
+            <svg class="arw" width="14" height="8" viewBox="0 0 14 8" fill="none" aria-hidden="true"><path d="M0 4h12M9 1l3 3-3 3" stroke="currentColor" stroke-width="1"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <aside style="grid-column:9 / span 4; align-self:end" class="rv" data-rv>
+        <p class="note" style="margin-bottom:1rem">What to expect</p>
+        <p style="font-size:var(--t-sm); line-height:1.8; color:rgba(244,241,236,.66)">
+          A first consultation takes about forty minutes: an examination, any imaging that is
+          needed, and a written plan with costs before you decide anything. Requests are
+          answered within one working day.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ------------------------------ FORM ------------------------------ -->
+  <section class="sec" style="padding-top:0" aria-labelledby="formTitle">
+    <div class="wrap">
+      <hr class="rule" style="margin-bottom:clamp(3rem,8vh,5rem)">
+      <div class="grid">
+        <div style="grid-column:1 / span 3">
+          <h3 id="formTitle" class="eyebrow">Request an appointment</h3>
+        </div>
+
+        <div style="grid-column:4 / span 9">
+          <!-- No endpoint is wired up. Point action= at the practice's own
+               handler, or post the payload from the submit handler below. -->
+          <form class="form" id="apptForm" novalidate>
+            <div class="f f--full">
+              <label for="fName">Full name</label>
+              <input id="fName" name="name" type="text" autocomplete="name" required placeholder="Your name">
+              <span class="err" id="eName" aria-live="polite"></span>
+            </div>
+
+            <div class="f">
+              <label for="fPhone">Phone</label>
+              <input id="fPhone" name="phone" type="tel" autocomplete="tel" required inputmode="tel" placeholder="+91">
+              <span class="err" id="ePhone" aria-live="polite"></span>
+            </div>
+
+            <div class="f">
+              <label for="fEmail">Email</label>
+              <input id="fEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+              <span class="err" id="eEmail" aria-live="polite"></span>
+            </div>
+
+            <div class="f f--third">
+              <label for="fDate">Preferred date</label>
+              <input id="fDate" name="date" type="date" required>
+              <span class="err" id="eDate" aria-live="polite"></span>
+            </div>
+
+            <div class="f f--third">
+              <label for="fTime">Preferred time</label>
+              <select id="fTime" name="time" required>
+                <option value="">Select</option>
+                <option>Morning · 09:00 – 12:00</option>
+                <option>Afternoon · 12:00 – 16:00</option>
+                <option>Evening · 16:00 – 19:00</option>
+              </select>
+              <span class="err" id="eTime" aria-live="polite"></span>
+            </div>
+
+            <div class="f f--third">
+              <label for="fTreat">Treatment</label>
+              <select id="fTreat" name="treatment">
+                <option value="">Not sure yet</option>
+                <option>Preventive dentistry</option>
+                <option>Teeth whitening</option>
+                <option>Dental implants</option>
+                <option>Clear aligners</option>
+                <option>Root canal treatment</option>
+                <option>Cosmetic dentistry</option>
+                <option>Children&rsquo;s dentistry</option>
+                <option>Smile makeover</option>
+              </select>
+              <span class="err"></span>
+            </div>
+
+            <div class="f f--full">
+              <label for="fMsg">Message</label>
+              <textarea id="fMsg" name="message" rows="3" placeholder="Anything you would like us to know beforehand"></textarea>
+              <span class="err"></span>
+            </div>
+
+            <div class="form__foot">
+              <p class="note" style="max-width:34ch; text-transform:none; letter-spacing:.01em; line-height:1.6">
+                We use these details only to arrange your appointment.
+              </p>
+              <button class="btn btn--fill" type="submit">
+                Request appointment
+                <svg class="arw" width="14" height="8" viewBox="0 0 14 8" fill="none" aria-hidden="true"><path d="M0 4h12M9 1l3 3-3 3" stroke="currentColor" stroke-width="1"/></svg>
+              </button>
+            </div>
+          </form>
+
+          <!-- Confirmation state, revealed in place of the form -->
+          <div class="done" id="apptDone" hidden>
+            <div class="done__in">
+              <h3 class="serif">Request received.</h3>
+              <p id="doneCopy">Thank you. We will confirm your appointment by phone within one working day. If it is urgent, please call the clinic directly.</p>
+              <p style="margin-top:2rem">
+                <button class="ln" type="button" id="apptReset" style="font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase">Send another request</button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------- CONTACT ---------------------------- -->
+  <section class="sec" id="contact" style="padding-top:0">
+    <div class="wrap">
+      <hr class="rule" style="margin-bottom:clamp(3rem,8vh,5rem)">
+      <div class="ct__grid">
+        <div class="ct__col">
+          <h3>Clinic</h3>
+          <address class="v" style="font-style:normal">
+            Apollo Hospitals Indraprastha<br>
+            Mathura Road, Sarita Vihar<br>
+            New Delhi 110076<br>
+            India
+          </address>
+          <div class="ct__quick">
+            <a class="btn" href="tel:+911140000000" data-clinic="phone-href">Call</a>
+            <a class="btn" href="https://wa.me/911140000000" data-clinic="whatsapp" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        </div>
+
+        <div class="ct__col">
+          <h3>Contact</h3>
+          <p class="v">
+            <a class="ln" href="tel:+911140000000" data-clinic="phone-href">+91 11 4000 0000</a><br>
+            <a class="ln" href="mailto:appointments@nayardental.example" data-clinic="email-href">appointments@nayardental.example</a>
+          </p>
+          <p class="note" style="margin-top:.9rem">Placeholder contact details</p>
+        </div>
+
+        <div class="ct__col">
+          <h3>Opening hours</h3>
+          <p class="v">
+            Monday – Friday &nbsp; 09:00 – 19:00<br>
+            Saturday &nbsp; 09:00 – 15:00<br>
+            Sunday &nbsp; By arrangement
+          </p>
+        </div>
+
+        <div class="ct__col">
+          <h3>Getting here</h3>
+          <p class="v">
+            Sarita Vihar metro, Violet Line<br>
+            On-site parking
+          </p>
+          <p style="margin-top:1rem">
+            <a class="ln" style="font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase"
+               href="https://www.google.com/maps/dir/?api=1&amp;destination=Apollo%20Hospitals%20Indraprastha%2C%20Sarita%20Vihar%2C%20New%20Delhi"
+               target="_blank" rel="noopener">Get directions</a>
+          </p>
+        </div>
+
+        <div class="ct__map">
+          <iframe title="Map showing the clinic location in Sarita Vihar, New Delhi" loading="lazy"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=77.2718%2C28.5305%2C77.2918%2C28.5505&amp;layer=mapnik&amp;marker=28.5405%2C77.2818"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<!-- ============================== FOOTER ============================= -->
+<footer class="ft on-dark">
+  <div class="wrap">
+    <div class="ft__top">
+      <div class="ft__brand">
+        <p class="m">Nayar Dental</p>
+        <p>Modern dentistry, thoughtfully delivered.</p>
+        <div class="ft__soc">
+          <a href="#" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.8c0-.5.4-.8 1-.8Z"/></svg></a>
+          <a href="#" aria-label="LinkedIn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7.2v.1M12 17v-4a2 2 0 0 1 4 0v4"/></svg></a>
+        </div>
+      </div>
+
+      <nav class="ft__col" aria-label="Footer">
+        <h4>Practice</h4>
+        <ul>
+          <li><a class="ln" href="#about">About</a></li>
+          <li><a class="ln" href="#treatments">Treatments</a></li>
+          <li><a class="ln" href="#experience">The clinic</a></li>
+          <li><a class="ln" href="#doctor">Dr. Sanjna Nayar</a></li>
+        </ul>
+      </nav>
+
+      <div class="ft__col">
+        <h4>Visit</h4>
+        <ul>
+          <li>Mathura Road, Sarita Vihar</li>
+          <li>New Delhi 110076</li>
+          <li>Mon–Fri 09:00 – 19:00</li>
+          <li>Sat 09:00 – 15:00</li>
+        </ul>
+      </div>
+
+      <div class="ft__col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a class="ln" href="tel:+911140000000" data-clinic="phone-href">+91 11 4000 0000</a></li>
+          <li><a class="ln" href="mailto:appointments@nayardental.example" data-clinic="email-href">appointments@nayardental.example</a></li>
+          <li><a class="ln" href="#appointment">Book an appointment</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ft__bot">
+      <p>&copy; <span id="year">2026</span> Nayar Dental. All rights reserved.</p>
+      <ul>
+        <li><a class="ln" href="#">Privacy Policy</a></li>
+        <li><a class="ln" href="#">Terms</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ==========================================================================
+   NAYAR DENTAL — behaviour
+   One requestAnimationFrame loop drives every scroll-linked value. Scroll
+   position is read once per frame and nothing reads layout inside the loop:
+   element geometry is measured on resize and cached. The loop sleeps when
+   the page is idle.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- CONFIG
+     Everything the practice is likely to change lives here.               */
+  var CONFIG = {
+    media: {
+      /* Hero footage. First entry that fits the viewport wins. Replace these
+         URLs with the clinic's own film — nothing else needs to change. */
+      hero: [
+        { src: 'https://videos.pexels.com/video-files/6763242/6763242-hd_1920_1080_25fps.mp4', minWidth: 1000 },
+        { src: 'https://videos.pexels.com/video-files/6763242/6763242-hd_1280_720_25fps.mp4', minWidth: 0 }
+      ],
+      /* Portrait of the dentist. Leave empty and the designed plate stands in. */
+      portrait: ''
+    },
+    clinic: {
+      phone:     '+91 11 4000 0000',
+      phoneHref: 'tel:+911140000000',
+      email:     'appointments@nayardental.example',
+      whatsapp:  'https://wa.me/911140000000'
+    },
+    motion: {
+      heroScrub:  0.085,   // how closely the film follows the scroll
+      followLerp: 0.13,    // pointer-following media
+      compareLerp:0.20     // before/after handle
+    }
+  };
+
+  /* ------------------------------------------------------------ UTILITIES */
+  var doc = document, root = doc.documentElement;
+  var $  = function (s, c) { return (c || doc).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); };
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  /* Smooth 0→1 ramp between two scroll positions — the site's easing unit. */
+  function ss(a, b, t) { var x = clamp((t - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); }
+
+  var reduceQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var fineQ   = window.matchMedia('(hover: hover) and (pointer: fine)');
+  var wideQ   = window.matchMedia('(min-width: 901px)');
+  var REDUCE  = reduceQ.matches;
+
+  var V = { w: window.innerWidth, h: window.innerHeight };
+
+  /* --------------------------------------------------------------- TICKER
+     Subscribers receive the frame's scroll position and a delta-time factor
+     normalised to 60fps, so interpolation is frame-rate independent.      */
+  var Ticker = (function () {
+    var subs = [], running = false, last = 0, idleUntil = 0, holds = 0;
+
+    function frame(now) {
+      var dt = last ? clamp((now - last) / 16.667, 0.4, 3) : 1;
+      last = now;
+      var y = window.pageYOffset;
+      for (var i = 0; i < subs.length; i++) subs[i](y, dt);
+      if (holds > 0 || now < idleUntil) { requestAnimationFrame(frame); }
+      else { running = false; last = 0; }
+    }
+    function start() { if (!running) { running = true; last = 0; requestAnimationFrame(frame); } }
+
+    return {
+      add:  function (fn) { subs.push(fn); },
+      /* Keep the loop alive for a moment so interpolated values can settle. */
+      wake: function (ms) { idleUntil = performance.now() + (ms || 900); start(); },
+      hold: function () { holds++; start(); },
+      release: function () { holds = Math.max(0, holds - 1); idleUntil = performance.now() + 900; }
+    };
+  })();
+
+  /* Measurement is centralised: read layout here, never inside the loop. */
+  var measurers = [];
+  function onMeasure(fn) { measurers.push(fn); fn(); }
+  function measureAll() {
+    V.w = window.innerWidth; V.h = window.innerHeight;
+    for (var i = 0; i < measurers.length; i++) measurers[i]();
+    Ticker.wake(700);
+  }
+
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt); rt = setTimeout(measureAll, 140);
+  }, { passive: true });
+  window.addEventListener('orientationchange', function () { setTimeout(measureAll, 260); });
+  window.addEventListener('scroll', function () { Ticker.wake(900); }, { passive: true });
+  doc.addEventListener('visibilitychange', function () { if (!doc.hidden) Ticker.wake(600); });
+
+  /* --------------------------------------------------------------- CONFIG
+     applied to the markup, so contact details live in one place.          */
+  (function applyConfig() {
+    var c = CONFIG.clinic;
+    $$('[data-clinic]').forEach(function (el) {
+      var k = el.getAttribute('data-clinic');
+      if (k === 'phone')      { el.textContent = c.phone; el.setAttribute('href', c.phoneHref); }
+      if (k === 'phone-href') { el.setAttribute('href', c.phoneHref); if (el.textContent.indexOf('+') === 0) el.textContent = c.phone; }
+      if (k === 'email')      { el.textContent = c.email; el.setAttribute('href', 'mailto:' + c.email); }
+      if (k === 'email-href') { el.setAttribute('href', 'mailto:' + c.email); if (el.textContent.indexOf('@') > 0) el.textContent = c.email; }
+      if (k === 'whatsapp')   { el.setAttribute('href', c.whatsapp); }
+    });
+    var y = $('#year'); if (y) y.textContent = new Date().getFullYear();
+
+    var p = CONFIG.media.portrait, img = $('#docImg'), ph = $('#docPh');
+    if (p && img) { img.src = p; img.hidden = false; if (ph) ph.style.display = 'none'; }
+  })();
+
+  /* A failed remote image leaves a designed surface behind, not a hole. */
+  doc.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG') {
+      var plate = t.closest ? t.closest('.plate') : null;
+      if (plate) plate.classList.add('is-empty');
+    }
+  }, true);
+
+  /* ------------------------------------------------------------ NAVIGATION */
+  (function nav() {
+    var nav = $('#nav'), burger = $('#burger'), menu = $('#menu');
+    var solidAt = 0;
+
+    onMeasure(function () {
+      var hero = $('#heroTrack');
+      solidAt = hero ? hero.offsetTop + hero.offsetHeight - V.h * 0.4 : 80;
+    });
+
+    Ticker.add(function (y) {
+      nav.classList.toggle('is-solid', y > solidAt);
+      nav.classList.toggle('is-tucked', y > 60 && y <= solidAt);
+    });
+
+    function setMenu(open) {
+      root.classList.toggle('is-menu', open);
+      root.classList.toggle('no-scroll', open);
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      if (open) { menu.removeAttribute('inert'); } else { menu.setAttribute('inert', ''); }
+    }
+    burger.addEventListener('click', function () { setMenu(!root.classList.contains('is-menu')); });
+    menu.addEventListener('click', function (e) { if (e.target.closest('a')) setMenu(false); });
+    doc.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && root.classList.contains('is-menu')) { setMenu(false); burger.focus(); }
+    });
+    wideQ.addEventListener('change', function (e) { if (e.matches) setMenu(false); });
+  })();
+
+  /* ------------------------------------------------------------------ HERO
+     The scroll timeline. `p` runs 0→1 across the tall track; every hero
+     element is a pure function of it.                                     */
+  (function hero() {
+    var section = $('#top'), track = $('#heroTrack');
+    if (!track) return;
+
+    var stage   = $('.hero__stage', section),
+        media   = $('.hero__media', section),
+        video   = $('#heroVideo'),
+        stills  = $$('#heroStills img'),
+        head    = $('#heroHead'),
+        lines   = $$('.l', head),
+        sub     = $('#heroSub'),
+        plate   = $('#heroPlate'),
+        veil    = $('#heroVeil'),
+        scroll  = $('#heroScroll');
+
+    var top = 0, range = 1;
+    onMeasure(function () {
+      top = track.getBoundingClientRect().top + window.pageYOffset;
+      range = Math.max(1, track.offsetHeight - stage.offsetHeight);
+    });
+
+    /* ---- footage --------------------------------------------------- */
+    var scrubbing = false, duration = 0, cur = 0, seeking = false, lastSeek = -1;
+
+    function pickSource() {
+      var list = CONFIG.media.hero;
+      for (var i = 0; i < list.length; i++) if (V.w >= list[i].minWidth) return list[i].src;
+      return list.length ? list[list.length - 1].src : '';
+    }
+
+    function useStills() {
+      section.setAttribute('data-mode', 'stills');
+      scrubbing = false;
+    }
+
+    if (video && CONFIG.media.hero.length && !REDUCE) {
+      video.src = pickSource();
+      video.addEventListener('error', useStills);
+      video.addEventListener('seeking', function () { seeking = true; });
+      video.addEventListener('seeked',  function () { seeking = false; });
+
+      video.addEventListener('loadedmetadata', function () {
+        duration = video.duration || 0;
+        /* Scrubbing is a desktop behaviour. On touch the film simply plays,
+           which is both smoother and kinder to the battery. */
+        /* A streamed source can report Infinity; that cannot be scrubbed. */
+        if (isFinite(duration) && duration > 0.5 && wideQ.matches) { scrubbing = true; video.pause(); }
+        else if (!isFinite(duration)) { useStills(); }
+        Ticker.wake(600);
+      });
+
+      /* Autoplay warms the decoder; if it is refused the poster still shows. */
+      var play = video.play();
+      if (play && play.catch) play.catch(function () {});
+
+      /* If nothing is decodable within a few seconds, switch render path. */
+      setTimeout(function () { if (video.readyState < 2) useStills(); }, 7000);
+    } else {
+      useStills();
+    }
+
+    /* ---- choreography ---------------------------------------------- */
+    var lastMask = -1, lastStill = -1;
+
+    function render(p, dt) {
+      var u = V.h / 100;                       // one viewport-height unit
+
+      /* Footage: a slow pull-in, never a zoom. */
+      var mz = 1.16 - 0.16 * ss(0, 1, p);
+      media.style.transform = 'translate3d(0,' + (p * 5 * u).toFixed(2) + 'px,0) scale(' + mz.toFixed(4) + ')';
+
+      /* Lines drift upward at different rates and separate very slightly. */
+      var sep = p * V.w * 0.011;
+      if (lines[0]) lines[0].style.transform = 'translate3d(' + (-sep * 0.55).toFixed(2) + 'px,' + (-p * 13 * u).toFixed(2) + 'px,0)';
+      if (lines[1]) lines[1].style.transform = 'translate3d(' + ( sep * 0.85).toFixed(2) + 'px,' + (-p * 20 * u).toFixed(2) + 'px,0)';
+      if (lines[2]) lines[2].style.transform = 'translate3d(' + (-sep * 0.30).toFixed(2) + 'px,' + (-p * 27 * u).toFixed(2) + 'px,0)';
+
+      /* The headline leaves through a soft diagonal mask, not a fade. */
+      var dis = ss(0.40, 0.72, p);
+      if (Math.abs(dis - lastMask) > 0.004) {
+        lastMask = dis;
+        var a = 132 - dis * 176;
+        var g = 'linear-gradient(101deg, #000 ' + (a - 26) + '%, rgba(0,0,0,0) ' + (a + 17) + '%)';
+        head.style.webkitMaskImage = g;
+        head.style.maskImage = g;
+      }
+
+      if (sub) {
+        sub.style.opacity = (1 - ss(0.05, 0.24, p)).toFixed(3);
+        sub.style.transform = 'translate3d(0,' + (-p * 9 * u).toFixed(2) + 'px,0)';
+      }
+
+      if (scroll) {
+        var so = 1 - ss(0, 0.045, p);
+        scroll.style.opacity = so.toFixed(3);
+        scroll.style.transform = 'translate3d(0,' + ((1 - so) * 14).toFixed(2) + 'px,0)';
+      }
+
+      /* The identity plate emerges as the headline clears the frame. */
+      if (plate) {
+        var pin = ss(0.58, 0.72, p);
+        plate.style.opacity = (pin * (1 - ss(0.90, 1, p))).toFixed(3);
+        plate.style.transform = 'translate3d(0,' + ((1 - pin) * 26).toFixed(2) + 'px,0)';
+      }
+
+      /* Ivory rises to meet the section below, so the two read as one shot. */
+      if (veil) veil.style.opacity = ss(0.84, 1, p).toFixed(3);
+
+      /* Render path A: scrub the film. Interpolated, so it has weight. */
+      if (scrubbing && duration) {
+        var want = p * (duration - 0.05);
+        cur = lerp(cur, want, clamp(CONFIG.motion.heroScrub * dt, 0, 1));
+        if (!seeking && Math.abs(cur - lastSeek) > 0.034) {
+          lastSeek = cur;
+          try { video.currentTime = cur; } catch (err) { useStills(); }
+        }
+      }
+
+      /* Render path B: cross-fade stills on the same timeline. */
+      if (!scrubbing && stills.length) {
+        var idx = p * (stills.length - 1);
+        if (Math.abs(idx - lastStill) > 0.008) {
+          lastStill = idx;
+          for (var i = 0; i < stills.length; i++) {
+            /* Frame 0 stays put; each later frame fades in on top of it, so
+               two unrelated frames are never half-visible at once. */
+            stills[i].style.opacity = (i === 0 ? 1 : ss(i - 1, i, idx)).toFixed(3);
+          }
+        }
+      }
+    }
+
+    /* The headline is the one thing that animates on arrival rather than
+       on scroll: the words rise once, then scroll takes over. */
+    $$('.w > i', head).forEach(function (el, k) { el.style.setProperty('--d', (140 + k * 90) + 'ms'); });
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { section.classList.add('is-ready'); });
+    });
+
+    if (REDUCE) {
+      media.style.transform = 'none';
+      if (veil) veil.style.opacity = 0;
+      return;
+    }
+
+    Ticker.add(function (y, dt) {
+      /* Skip the work entirely once the hero is well behind us. */
+      if (y > top + range + V.h) return;
+      render(clamp((y - top) / range, 0, 1), dt);
+    });
+  })();
+
+  /* --------------------------------------------------------------- REVEALS
+     Statement typography is split into words so it can rise line-clipped,
+     which reads as composition rather than a generic fade-up.             */
+  (function reveals() {
+    $$('[data-words]').forEach(function (el) {
+      var text = el.textContent.trim();
+      el.textContent = '';
+      text.split(/\s+/).forEach(function (word, i) {
+        var w = doc.createElement('span'); w.className = 'w';
+        var inner = doc.createElement('i');
+        inner.textContent = word;
+        inner.style.setProperty('--d', (i * 62) + 'ms');
+        w.appendChild(inner);
+        el.appendChild(w);
+        el.appendChild(doc.createTextNode(' '));
+      });
+      if (!el.hasAttribute('data-rv')) el.setAttribute('data-rv', '');
+    });
+
+    var targets = $$('[data-rv]');
+    if (!('IntersectionObserver' in window) || REDUCE) {
+      targets.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.14 });
+    targets.forEach(function (el) { io.observe(el); });
+  })();
+
+  /* -------------------------------------------------------------- PARALLAX
+     Deliberately small. The point is that the frame breathes, not that it
+     visibly slides.                                                       */
+  (function parallax() {
+    if (REDUCE) return;
+    var items = $$('[data-parallax]').map(function (el) {
+      return { el: el, img: $('img, video', el), depth: parseFloat(el.getAttribute('data-depth')) || 0.15, top: 0, h: 0 };
+    }).filter(function (i) { return i.img; });
+    if (!items.length) return;
+
+    onMeasure(function () {
+      items.forEach(function (i) {
+        var r = i.el.getBoundingClientRect();
+        i.top = r.top + window.pageYOffset; i.h = r.height;
+      });
+    });
+
+    Ticker.add(function (y) {
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (it.top + it.h < y - 200 || it.top > y + V.h + 200) continue;
+        var centre = it.top + it.h / 2 - (y + V.h / 2);
+        it.img.style.transform = 'translate3d(0,' + (centre * -it.depth).toFixed(2) + 'px,0)';
+      }
+    });
+  })();
+
+  /* ------------------------------------------------------------ TREATMENTS
+     One list, three input methods. The button is the source of truth; hover
+     only adds atmosphere on pointer devices.                              */
+  (function treatments() {
+    var list = $('#treatList');
+    if (!list) return;
+    var rows = $$('.tr__row', list);
+
+    /* Expand / collapse — works with mouse, touch and keyboard alike. */
+    rows.forEach(function (row) {
+      var btn = $('.tr__btn', row);
+      btn.addEventListener('click', function () {
+        var open = row.getAttribute('data-open') === '1';
+        rows.forEach(function (r) {
+          if (r !== row) { r.setAttribute('data-open', '0'); $('.tr__btn', r).setAttribute('aria-expanded', 'false'); }
+        });
+        row.setAttribute('data-open', open ? '0' : '1');
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (!open) { $$('.plate--clip', row).forEach(function (p) { p.classList.add('in'); }); }
+        Ticker.wake(1200);
+      });
+    });
+
+    if (!fineQ.matches || REDUCE) return;
+
+    /* Floating still. It follows the pointer at a distance — enough to feel
+       attached, not enough to feel like a cursor toy. */
+    var follow = $('#follow'), img = $('#followImg');
+    var tx = 0, ty = 0, fx = 0, fy = 0, active = false, started = false;
+    var cache = {};
+
+    rows.forEach(function (row) {
+      var src = row.getAttribute('data-media');
+      row.addEventListener('pointerenter', function () {
+        row.classList.add('is-hot');
+        if (!src) return;
+        if (!cache[src]) { cache[src] = new Image(); cache[src].src = src; }
+        img.src = src;
+        if (!active) { active = true; Ticker.hold(); }
+        follow.classList.add('is-on');
+        if (!started) { started = true; fx = tx; fy = ty; }
+      });
+      row.addEventListener('pointerleave', function () {
+        row.classList.remove('is-hot');
+        if (active) { active = false; follow.classList.remove('is-on'); Ticker.release(); }
+      });
+    });
+
+    list.addEventListener('pointermove', function (e) {
+      tx = e.clientX; ty = e.clientY;
+    }, { passive: true });
+
+    var sc = 0.92;
+    Ticker.add(function (y, dt) {
+      var want = active ? 1 : 0.92;
+      if (!active && Math.abs(fx - tx) < 0.5 && Math.abs(fy - ty) < 0.5 && Math.abs(sc - want) < 0.002) return;
+      var t = clamp(CONFIG.motion.followLerp * dt, 0, 1);
+      fx = lerp(fx, tx, t); fy = lerp(fy, ty, t); sc = lerp(sc, want, t);
+      follow.style.transform = 'translate3d(' + fx.toFixed(1) + 'px,' + fy.toFixed(1) + 'px,0) translate(-50%,-50%) scale(' + sc.toFixed(3) + ')';
+    });
+  })();
+
+  /* ---------------------------------------------------------- BEFORE/AFTER */
+  (function compare() {
+    var stage = $('#cmpStage'), handle = $('#cmpHandle');
+    if (!stage || !handle) return;
+
+    var target = 50, pos = 50, dragging = false, rect = null;
+    onMeasure(function () { rect = stage.getBoundingClientRect(); });
+
+    function fromClientX(x) {
+      if (!rect) rect = stage.getBoundingClientRect();
+      target = clamp(((x - rect.left) / rect.width) * 100, 0, 100);
+      Ticker.wake(900);
+    }
+    function commit(v) {
+      stage.style.setProperty('--pos', v.toFixed(2) + '%');
+      handle.setAttribute('aria-valuenow', Math.round(v));
+      handle.setAttribute('aria-valuetext', Math.round(v) + ' percent');
+    }
+
+    stage.addEventListener('pointerdown', function (e) {
+      dragging = true; rect = stage.getBoundingClientRect();
+      stage.setPointerCapture(e.pointerId);
+      fromClientX(e.clientX); Ticker.hold();
+    });
+    stage.addEventListener('pointermove', function (e) { if (dragging) fromClientX(e.clientX); });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+      stage.addEventListener(ev, function () { if (dragging) { dragging = false; Ticker.release(); } });
+    });
+
+    handle.addEventListener('keydown', function (e) {
+      var step = e.shiftKey ? 10 : 2, used = true;
+      if (e.key === 'ArrowLeft')       target = clamp(target - step, 0, 100);
+      else if (e.key === 'ArrowRight') target = clamp(target + step, 0, 100);
+      else if (e.key === 'Home')       target = 0;
+      else if (e.key === 'End')        target = 100;
+      else used = false;
+      if (used) { e.preventDefault(); Ticker.wake(900); }
+    });
+
+    Ticker.add(function (y, dt) {
+      if (Math.abs(pos - target) < 0.05) { if (pos !== target) { pos = target; commit(pos); } return; }
+      pos = lerp(pos, target, clamp(CONFIG.motion.compareLerp * dt, 0, 1));
+      commit(pos);
+    });
+
+    commit(pos);
+  })();
+
+  /* --------------------------------------------------------------- STORIES */
+  (function stories() {
+    var stage = $('#stStage');
+    if (!stage) return;
+    var slides = $$('.st__slide', stage), i = 0;
+    var prev = $('#stPrev'), next = $('#stNext'), count = $('#stCount');
+    if (slides.length < 2) return;
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function go(n, dir) {
+      var from = i;
+      i = (n + slides.length) % slides.length;
+      slides.forEach(function (s, k) {
+        s.classList.toggle('is-on', k === i);
+        s.classList.toggle('is-prev', k === from && dir < 0);
+      });
+      count.textContent = pad(i + 1) + ' / ' + pad(slides.length);
+    }
+    prev.addEventListener('click', function () { go(i - 1, -1); });
+    next.addEventListener('click', function () { go(i + 1, 1); });
+
+    stage.closest('section').addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft')  { go(i - 1, -1); }
+      if (e.key === 'ArrowRight') { go(i + 1, 1); }
+    });
+
+    /* Swipe, without hijacking a vertical scroll. */
+    var sx = 0, sy = 0, tracking = false;
+    stage.addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; tracking = true; });
+    stage.addEventListener('pointerup', function (e) {
+      if (!tracking) return; tracking = false;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) go(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    });
+
+    go(0, 1);
+  })();
+
+  /* ------------------------------------------------------------------ FORM
+     Validated in place. The confirmation replaces the form rather than
+     interrupting with a dialog.                                           */
+  (function appointment() {
+    var form = $('#apptForm'), done = $('#apptDone'), reset = $('#apptReset');
+    if (!form) return;
+
+    var dateEl = $('#fDate');
+    if (dateEl) dateEl.min = new Date().toISOString().slice(0, 10);
+
+    var rules = [
+      { id: 'fName',  err: 'eName',  test: function (v) { return v.trim().length >= 2; },       msg: 'Please enter your name.' },
+      { id: 'fPhone', err: 'ePhone', test: function (v) { return (v.replace(/\D/g, '')).length >= 8; }, msg: 'Please enter a phone number we can reach you on.' },
+      { id: 'fEmail', err: 'eEmail', test: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()); }, msg: 'Please enter a valid email address.' },
+      { id: 'fDate',  err: 'eDate',  test: function (v) { return !!v && v >= new Date().toISOString().slice(0, 10); }, msg: 'Please choose a date from today onwards.' },
+      { id: 'fTime',  err: 'eTime',  test: function (v) { return !!v; }, msg: 'Please choose a time of day.' }
+    ];
+
+    function check(rule, live) {
+      var el = $('#' + rule.id), field = el.closest('.f'), err = $('#' + rule.err);
+      var ok = rule.test(el.value);
+      field.setAttribute('data-invalid', ok ? '0' : '1');
+      el.setAttribute('aria-invalid', ok ? 'false' : 'true');
+      if (err) err.textContent = ok ? '' : rule.msg;
+      if (!ok && live) el.setAttribute('data-touched', '1');
+      return ok;
+    }
+
+    /* Re-check a field only once it has already failed — no nagging. */
+    rules.forEach(function (rule) {
+      var el = $('#' + rule.id);
+      ['input', 'change', 'blur'].forEach(function (ev) {
+        el.addEventListener(ev, function () {
+          if (el.closest('.f').getAttribute('data-invalid') === '1') check(rule, false);
+        });
+      });
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var first = null, ok = true;
+      rules.forEach(function (rule) {
+        if (!check(rule, true)) { ok = false; if (!first) first = $('#' + rule.id); }
+      });
+      if (!ok) { first.focus(); return; }
+
+      /* Where the practice's booking endpoint goes. The payload below is
+         already shaped for it; wire up fetch() and keep the same states. */
+      var data = {};
+      new FormData(form).forEach(function (v, k) { data[k] = v; });
+
+      var copy = $('#doneCopy'), when = '';
+      try {
+        var d = new Date(data.date + 'T00:00:00');
+        when = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+      } catch (err) { when = data.date; }
+      if (copy && when) {
+        copy.textContent = 'Thank you, ' + data.name.trim().split(/\s+/)[0] +
+          '. We have your request for ' + when + ', ' + (data.time || '').toLowerCase() +
+          '. We will confirm by phone within one working day.';
+      }
+
+      form.hidden = true;
+      done.hidden = false;
+      var h = $('h3', done);
+      if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+      done.scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth', block: 'center' });
+    });
+
+    if (reset) reset.addEventListener('click', function () {
+      form.reset();
+      $$('.f', form).forEach(function (f) { f.setAttribute('data-invalid', '0'); });
+      done.hidden = true; form.hidden = false;
+      $('#fName').focus();
+    });
+  })();
+
+  /* ------------------------------------------------------------------ BOOT */
+  window.addEventListener('load', function () { measureAll(); Ticker.wake(1200); });
+  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { measureAll(); });
+  measureAll();
+  Ticker.wake(1500);
+
+})();
+</script>
+</body>
+</html>
