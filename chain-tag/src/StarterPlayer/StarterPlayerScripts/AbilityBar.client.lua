@@ -20,7 +20,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -44,22 +43,6 @@ local function create(className, props, children)
 		child.Parent = instance
 	end
 	return instance
-end
-
-local function blip(pitch, volume)
-	if Config.Sounds.Blip == "" then
-		return
-	end
-	local sound = create("Sound", {
-		SoundId = Config.Sounds.Blip,
-		PlaybackSpeed = pitch,
-		Volume = volume,
-		Parent = SoundService,
-	})
-	SoundService:PlayLocalSound(sound)
-	task.delay(2, function()
-		sound:Destroy()
-	end)
 end
 
 --------------------------------------------------------------------------
@@ -206,7 +189,7 @@ local function press(slot)
 	end
 	local readyAt = player:GetAttribute("AbilityReady_" .. slot.ability) or 0
 	if workspace:GetServerTimeNow() < readyAt then
-		blip(0.5, Config.Sounds.UiVolume * 0.6)   -- not yet
+		Shared.playCue("Deny")   -- not yet
 		return
 	end
 	Remotes.UseAbility:FireServer(slot.ability)
@@ -258,7 +241,7 @@ player:GetAttributeChangedSignal("DashPulse"):Connect(function()
 	end
 	root.AssemblyLinearVelocity = direction.Unit * Config.Abilities.Dash.Power
 		+ Vector3.new(0, Config.Abilities.Dash.Lift, 0)
-	blip(1.6, Config.Sounds.UiVolume)
+	Shared.playCue("AbilityUse")
 end)
 
 --------------------------------------------------------------------------
@@ -299,7 +282,7 @@ RunService.RenderStepped:Connect(function()
 		-- Flash and chirp the moment it comes back, so you can feel it
 		-- refresh without staring at the bar.
 		if ready and not slot.wasReady then
-			blip(1.35, Config.Sounds.UiVolume * 0.8)
+			Shared.playCue("AbilityReady")
 			local scale = slot.button:FindFirstChildOfClass("UIScale")
 				or create("UIScale", { Parent = slot.button })
 			scale.Scale = 1.16

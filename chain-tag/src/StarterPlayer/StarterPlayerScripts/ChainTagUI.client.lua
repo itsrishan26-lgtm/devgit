@@ -20,7 +20,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = require(ReplicatedStorage:WaitForChild("ChainTagShared"))
@@ -51,22 +50,6 @@ end
 
 local function corner(radius, parent)
 	return create("UICorner", { CornerRadius = UDim.new(0, radius), Parent = parent })
-end
-
-local function playBlip(pitch, volume)
-	if Config.Sounds.Blip == "" then
-		return
-	end
-	local sound = create("Sound", {
-		SoundId = Config.Sounds.Blip,
-		PlaybackSpeed = pitch,
-		Volume = volume,
-		Parent = SoundService,
-	})
-	SoundService:PlayLocalSound(sound)
-	task.delay(2, function()
-		sound:Destroy()
-	end)
 end
 
 local function tween(instance, time, props, style)
@@ -585,6 +568,92 @@ local function showIntro(text, color)
 	tween(introLabel, 0.75, { TextTransparency = 1, TextStrokeTransparency = 1 })
 end
 
+-- Pickup card -------------------------------------------------------------
+-- One card, reused. Colour is the only thing that says how rare the crystal
+-- was, and it is the same colour the crystal, its burst and your aura use.
+
+local cardHolder = create("Frame", {
+	Name = "PickupCard",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.66),
+	Size = UDim2.fromOffset(260, 62),
+	BackgroundColor3 = Color3.fromRGB(10, 12, 16),
+	BackgroundTransparency = 0.12,
+	BorderSizePixel = 0,
+	Visible = false,
+	ZIndex = 12,
+	Parent = gui,
+})
+corner(10, cardHolder)
+local cardStroke = create("UIStroke", { Thickness = 2, Parent = cardHolder })
+local cardScale = create("UIScale", { Parent = cardHolder })
+
+local cardRarity = create("TextLabel", {
+	Position = UDim2.new(0, 0, 0, 9),
+	Size = UDim2.new(1, 0, 0, 16),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBlack,
+	Text = "",
+	TextSize = 15,
+	ZIndex = 12,
+	Parent = cardHolder,
+})
+
+local cardReward = create("TextLabel", {
+	Position = UDim2.new(0, 0, 0, 28),
+	Size = UDim2.new(1, 0, 0, 26),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamMedium,
+	Text = "",
+	TextColor3 = Color3.fromRGB(214, 220, 230),
+	TextSize = 13,
+	ZIndex = 12,
+	Parent = cardHolder,
+})
+
+local cardToken = 0
+
+local function showPickupCard(rarityName)
+	local rarity = Shared.rarity(rarityName)
+	cardToken += 1
+	local token = cardToken
+
+	cardRarity.Text = string.upper(rarity.name) .. " CRYSTAL"
+	cardRarity.TextColor3 = rarity.color
+	cardStroke.Color = rarity.color
+	cardStroke.Transparency = 0.15
+
+	local reward = string.format("+%d stamina   +%d speed for %ds", rarity.stamina, rarity.speed, rarity.duration)
+	if rarity.points > 0 then
+		reward = reward .. string.format("   +%d points", rarity.points)
+	end
+	cardReward.Text = reward
+
+	cardHolder.Visible = true
+	cardHolder.BackgroundTransparency = 0.12
+	cardRarity.TextTransparency = 0
+	cardReward.TextTransparency = 0
+	cardScale.Scale = 0.8
+	tween(cardScale, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
+
+	-- The big one sits on screen long enough to actually read.
+	local hold = rarity.announce and 2.4 or 1.2
+	task.delay(hold, function()
+		if token ~= cardToken then
+			return
+		end
+		tween(cardHolder, 0.4, { BackgroundTransparency = 1 })
+		tween(cardStroke, 0.4, { Transparency = 1 })
+		tween(cardRarity, 0.4, { TextTransparency = 1 })
+		tween(cardReward, 0.4, { TextTransparency = 1 })
+		task.delay(0.45, function()
+			if token == cardToken then
+				cardHolder.Visible = false
+			end
+		end)
+	end)
+end
+
 -- Chain taut warning ------------------------------------------------------
 
 local tautLabel = create("TextLabel", {
@@ -639,6 +708,8 @@ local function showBanner(title, subtitle, color, holdSeconds)
 end
 
 local toastColors = {
+	legendary = Config.Beacon.Color,
+	purchase = Config.Colors.Good,
 	catch = Config.Colors.Seeker,
 	seeker = Config.Colors.Seeker,
 	warn = Config.Colors.Warn,
@@ -795,7 +866,7 @@ local function onPhaseChanged()
 
 	if phase == "Round" then
 		showIntro("GO!", Config.Colors.Good)
-		playBlip(1.6, Config.Sounds.UiVolume)
+		Shared.playCue("RoundStart")
 	end
 
 	if phase == "Starting" then
@@ -805,20 +876,23 @@ local function onPhaseChanged()
 		elseif Shared.isSeeker(player) then
 			showBanner("YOU ARE THE SEEKER", "Chain every runner before the timer runs out",
 				Config.Colors.Seeker, 4)
-			playBlip(0.6, Config.Sounds.UiVolume)
+			Shared.playCue("RoundStart")
 		else
 			showBanner("RUN", "Stay free until the clock hits zero", Config.Colors.Runner, 4)
-			playBlip(1.3, Config.Sounds.UiVolume)
+			Shared.playCue("RoundStart")
 		end
 	elseif phase == "Results" then
 		local winner = State:GetAttribute("Winner")
 		local subtitle = State:GetAttribute("ResultText") or ""
+		-- Win and lose are different cues, so which one you hear depends on
+		-- which side you were on.
+		local iWon = (winner == "Seekers") == Shared.isSeeker(player)
 		if winner == "Seekers" then
 			showBanner("SEEKERS WIN", subtitle, Config.Colors.Seeker, Config.ResultsTime - 1)
-			playBlip(0.7, Config.Sounds.UiVolume)
+			Shared.playCue(iWon and "Win" or "Lose")
 		elseif winner == "Runners" then
 			showBanner("RUNNERS WIN", subtitle, Config.Colors.Runner, Config.ResultsTime - 1)
-			playBlip(1.5, Config.Sounds.UiVolume)
+			Shared.playCue(iWon and "Win" or "Lose")
 		else
 			showBanner("ROUND OVER", subtitle, Config.Colors.Neutral, Config.ResultsTime - 1)
 		end
@@ -876,7 +950,7 @@ Remotes.CatchCountdown.OnClientEvent:Connect(function(catcherName, caughtName, s
 		countdownScale.Scale = 1.45
 		tween(countdownScale, 0.45, { Scale = 1 }, Enum.EasingStyle.Back)
 		tween(countdownNumber, 0.9, { TextTransparency = 0.15 })
-		playBlip(involved and 0.8 or 1.1, involved and Config.Sounds.CatchVolume or Config.Sounds.UiVolume)
+		Shared.playCue(involved and "Caught" or "CountdownTick")
 		task.wait(1)
 	end
 
@@ -888,23 +962,30 @@ end)
 Remotes.Toast.OnClientEvent:Connect(pushToast)
 Remotes.Popup.OnClientEvent:Connect(showPopup)
 
+Remotes.Collect.OnClientEvent:Connect(function(_, rarityName, collectorId)
+	local rarity = Shared.rarity(rarityName)
+	if collectorId == player.UserId then
+		showPickupCard(rarityName)
+		Shared.playCue(rarity.cue)
+		if rarity.announce then
+			screenFlash(rarity.color, 0.3)
+		end
+	elseif rarity.announce then
+		-- Somebody else got the big one. Worth hearing about, quietly.
+		Shared.playCue(rarity.cue, 0.4)
+	end
+end)
+
 -- Levels come from total points, so the moment to celebrate one is when the
 -- points value itself changes.
-task.spawn(function()
-	local stats = player:WaitForChild("leaderstats", 30)
-	local points = stats and stats:WaitForChild("Points", 10)
-	if not points then
-		return
+local level = Shared.playerLevel(player)
+player:GetAttributeChangedSignal("TotalPoints"):Connect(function()
+	local reached = Shared.playerLevel(player)
+	if reached > level then
+		level = reached
+		showBanner("LEVEL " .. reached, "Keep it up", Config.Colors.Good, 2.5)
+		Shared.playCue("LevelUp")
 	end
-	local level = Shared.levelFromPoints(points.Value)
-	points.Changed:Connect(function(value)
-		local reached = Shared.levelFromPoints(value)
-		if reached > level then
-			level = reached
-			showBanner("LEVEL " .. reached, "Keep it up", Config.Colors.Good, 2.5)
-			playBlip(1.7, Config.Sounds.UiVolume)
-		end
-	end)
 end)
 
 --------------------------------------------------------------------------
@@ -1068,7 +1149,7 @@ task.spawn(function()
 			local left = math.ceil(Shared.timeLeft())
 			if left <= 3 and left >= 1 and left ~= beepedAt then
 				beepedAt = left
-				playBlip(0.9 + (3 - left) * 0.2, Config.Sounds.UiVolume)
+				Shared.playCue("CountdownTick")
 				showIntro(tostring(left))
 			end
 		else

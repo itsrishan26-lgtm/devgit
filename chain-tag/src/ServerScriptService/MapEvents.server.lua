@@ -97,8 +97,6 @@ local pickups = {}   -- { part = Part, takenAt = number? }
 local function makePickup()
 	local part = Instance.new("Part")
 	part.Name = "EnergyCrystal"
-	part.Size = Vector3.new(1.7, 1.7, 1.7)
-	part.Color = Config.Pickups.Color
 	part.Material = Enum.Material.Neon
 	part.Anchored = true
 	part.CanCollide = false
@@ -110,8 +108,6 @@ local function makePickup()
 	part.Parent = folder
 
 	local light = Instance.new("PointLight")
-	light.Color = Config.Pickups.Color
-	light.Range = 14
 	light.Brightness = 2
 	light.Parent = part
 
@@ -139,15 +135,36 @@ local function placePickup(pickup)
 		pickup.takenAt = os.clock()
 		return false
 	end
+
+	-- Every crystal rolls its own rarity when it lands, so the ladder is
+	-- re-rolled all round rather than fixed at the start.
+	local rarity = Shared.rollRarity()
+	pickup.rarity = rarity
+
+	local part = pickup.part
 	local resting = point + Vector3.new(0, Config.Pickups.Hover, 0)
-	pickup.part.Position = resting
-	-- ChainVisuals bobs and spins around this, so it needs the exact spot.
-	pickup.part:SetAttribute("Base", resting)
-	pickup.part.Transparency = 0
-	pickup.takenAt = nil
-	local light = pickup.part:FindFirstChildOfClass("PointLight")
+	part.Size = Vector3.new(rarity.size, rarity.size, rarity.size)
+	part.Color = rarity.color
+	part.Position = resting
+	part.Transparency = 0
+	-- ChainVisuals reads these to bob, spin and colour it on each client.
+	part:SetAttribute("Base", resting)
+	part:SetAttribute("Rarity", rarity.name)
+	part:SetAttribute("Spin", rarity.spin)
+
+	local light = part:FindFirstChildOfClass("PointLight")
 	if light then
+		light.Color = rarity.color
+		light.Range = rarity.light
 		light.Enabled = true
+	end
+
+	pickup.takenAt = nil
+
+	if rarity.announce then
+		-- The top of the ladder is a server-wide event, not just a better
+		-- drop. Everybody hears about it and races for it.
+		Shared.toast("A " .. string.upper(tostring(rarity.name)) .. " crystal landed in the park", "legendary")
 	end
 	return true
 end
@@ -166,22 +183,36 @@ end
 -- the first one's timer running out.
 local burstToken = {}
 
-local function grantPickup(player)
+local function grantPickup(player, rarity)
 	local seeker = Shared.isSeeker(player)
-	local bonus = seeker and Config.Pickups.SeekerSpeed or Config.Pickups.RunnerSpeed
+	local bonus = rarity.speed * (seeker and Config.Pickups.SeekerScale or 1)
 
 	local token = (burstToken[player] or 0) + 1
 	burstToken[player] = token
 
 	player:SetAttribute("SpeedBonus", bonus)
-	-- Sprint (on the client) tops the bar up whenever this counter changes.
+	-- Sprint (on the client) tops the bar up whenever this counter changes,
+	-- by whatever amount this rarity is worth.
+	player:SetAttribute("StaminaGrantAmount", rarity.stamina)
 	player:SetAttribute("StaminaGrant", (player:GetAttribute("StaminaGrant") or 0) + 1)
 
-	task.delay(Config.Pickups.SpeedTime, function()
+	-- The orbiting aura every client draws around them for the duration.
+	player:SetAttribute("AuraRarity", rarity.name)
+	player:SetAttribute("AuraUntil", workspace:GetServerTimeNow() + rarity.duration)
+
+	if rarity.points > 0 then
+		Shared.addStat(player, "Points", rarity.points)
+	end
+
+	task.delay(rarity.duration, function()
 		if player.Parent and burstToken[player] == token then
 			player:SetAttribute("SpeedBonus", 0)
 		end
 	end)
+
+	if rarity.announce then
+		Shared.toast(player.Name .. " grabbed the " .. string.upper(tostring(rarity.name)) .. " crystal", "legendary")
+	end
 end
 
 local function spawnPickups()
@@ -213,8 +244,13 @@ local function updatePickups()
 					if root then
 						local offset = root.Position - pickup.part.Position
 						if offset:Dot(offset) <= radiusSquared then
-							grantPickup(player)
+							local rarity = pickup.rarity or Config.Rarities[1]
+							local where = pickup.part.Position
+							grantPickup(player, rarity)
 							hidePickup(pickup)
+							-- Everyone sees the burst; only the person who
+							-- took it gets the card on their screen.
+							Shared.Remotes.Collect:FireAllClients(where, rarity.name, player.UserId)
 							break
 						end
 					end
@@ -508,6 +544,7 @@ local function stopRound()
 	for _, player in ipairs(Players:GetPlayers()) do
 		player:SetAttribute("InBeacon", false)
 		player:SetAttribute("SpeedBonus", 0)
+		player:SetAttribute("AuraUntil", 0)
 	end
 end
 

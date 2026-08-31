@@ -111,7 +111,8 @@ end)
 
 -- MapEvents bumps this counter when you pick up an energy crystal.
 player:GetAttributeChangedSignal("StaminaGrant"):Connect(function()
-	stamina = math.min(maxStamina(), stamina + Config.Pickups.Stamina)
+	local amount = player:GetAttribute("StaminaGrantAmount") or 40
+	stamina = math.min(maxStamina(), stamina + amount)
 	if exhausted and stamina >= Config.Stamina.MinToRestart then
 		exhausted = false
 	end

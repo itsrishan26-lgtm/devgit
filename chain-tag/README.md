@@ -60,6 +60,7 @@ Insert two **Script**s (the plain kind, not LocalScript) under
 | `CatchDetection` | `src/ServerScriptService/CatchDetection.server.lua` |
 | `MapEvents` | `src/ServerScriptService/MapEvents.server.lua` |
 | `Powerups` | `src/ServerScriptService/Powerups.server.lua` |
+| `Shop` | `src/ServerScriptService/Shop.server.lua` |
 
 If you already have scripts with these names, paste over them completely.
 
@@ -74,6 +75,7 @@ Insert three **LocalScript**s under `StarterPlayer > StarterPlayerScripts`:
 | `ChainVisuals` | `src/StarterPlayer/StarterPlayerScripts/ChainVisuals.client.lua` |
 | `ScoreboardUI` | `src/StarterPlayer/StarterPlayerScripts/ScoreboardUI.client.lua` |
 | `AbilityBar` | `src/StarterPlayer/StarterPlayerScripts/AbilityBar.client.lua` |
+| `ShopUI` | `src/StarterPlayer/StarterPlayerScripts/ShopUI.client.lua` |
 
 ### Step 5 — delete the old stuff
 
@@ -99,13 +101,15 @@ The Output window should show:
 [ChainTag] CatchDetection running. Tag range 6 studs.
 [ChainTag] MapEvents running. Pickups: true, beacon: true, rescue: true
 [ChainTag] Powerups running. Dash 9s, Radar 24s, Vanish 26s.
+[ChainTag] Shop running. 10 items in the catalogue.
 [ChainTag] ChainTagUI loaded and listening.
 [ChainTag] ChainVisuals loaded. Chain mode: Leash
 [ChainTag] ScoreboardUI loaded. Hold Tab.
 [ChainTag] AbilityBar loaded. Keys 1 and 2.
+[ChainTag] ShopUI loaded. Press P or click STORE.
 ```
 
-Four from the server, four from the client. **If the client four are
+Five from the server, five from the client. **If the client four are
 missing, the LocalScripts are not installed** — and `GameSetup` will name
 each missing one in a warning, including if you added it as the wrong class
 (a Script instead of a LocalScript).
@@ -136,6 +140,7 @@ ServerScriptService
   CatchDetection                Script         tagging
   MapEvents                     Script         pickups, beacon, rescue
   Powerups                      Script         abilities and their cooldowns
+  Shop                          Script         purchases and equipping
 
 StarterPlayer
   StarterPlayerScripts
@@ -144,6 +149,7 @@ StarterPlayer
     ChainVisuals                LocalScript    chain, outlines, leash
     ScoreboardUI                LocalScript    Tab scoreboard + results
     AbilityBar                  LocalScript    the two ability buttons
+    ShopUI                      LocalScript    the store panel
 
 Workspace
   ChainTagMap                   (made at runtime) pickups and the beacon
@@ -184,10 +190,25 @@ Three systems run during the round. None of them need you to mark or place
 anything — every position is found at runtime by raycasting for flat ground
 inside `Config.Map.Radius` of `Config.Map.Center`.
 
-**Energy crystals.** Eight glowing pickups scattered on the ground. A runner
-gets their stamina bar refilled plus four seconds of extra speed; a seeker
-gets a smaller burst. Both sides want them, so they become ground worth
-fighting over. A taken one comes back somewhere new 22 seconds later.
+**Energy crystals.** Eight glowing pickups scattered on the ground, and each
+one rolls its own rarity when it lands:
+
+| Rarity | Chance | Stamina | Speed | Points |
+|---|---|---|---|---|
+| Common | 62% | +40 | +4 for 4s | — |
+| Rare | 26% | +70 | +6 for 5s | +5 |
+| Epic | 9% | +100 | +8 for 6s | +15 |
+| **Legendary** | **3%** | +140 | +11 for 8s | +40 |
+
+The weights are the point. Common and Rare are scenery, Epic is a find, and
+Legendary is a **server-wide event** — it announces itself to everybody the
+moment it lands, so people drop what they are doing and race for it.
+
+Rarity is communicated by one thing only: colour. The same colour appears on
+the crystal, its light, the burst it leaves when taken, the card on your
+screen and the ring of orbs that spins around you afterwards. Seekers get a
+smaller share of the speed than runners, so a crystal is worth taking for
+both sides without making a seeker unstoppable.
 
 **The beacon.** A marked circle that lands somewhere random 15 seconds into
 the round and moves every 35 seconds. Runners score a point per second while
@@ -205,6 +226,30 @@ forever.
 
 This is the biggest change to how the game plays. If you want it off, set
 `Config.Rescue.Enabled = false` and everything else carries on working.
+
+### The store
+
+Press **P**, or click **STORE** on the left edge. Everything costs Points,
+which you earn by playing.
+
+| | |
+|---|---|
+| **Trails** | stream behind you when you run |
+| **Auras** | orbit you all round long |
+| **Chains** | recolour the chain you drag |
+| **Titles** | float over your head |
+
+**Everything in it is cosmetic on purpose.** A store that sells speed turns
+every round into a question of who has ground the most points, and the people
+who most need a fair round are the new ones with nothing bought.
+
+**Spending never costs you a level.** `Points` is a balance the store spends
+down; `TotalPoints` is everything you have ever earned and only goes up. Levels
+read the second one.
+
+Adding an item is one line in `Config.Shop.Items` — the store UI builds itself
+from that list, and the server re-reads the price and your balance from its own
+copy, so nothing about a purchase trusts your client.
 
 ### Powerups
 
@@ -326,6 +371,10 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 | `Abilities.Dash.Power` | 62 | how hard the dash shoves |
 | `Levels.PointsPerLevel` | 40 | level 2 at 40 points, 3 at 160, 4 at 360 |
 | `Combo.Window` | 20 | seconds to keep a catch streak alive |
+| `Rarities` | 4 tiers | weights, colours and rewards for the crystals |
+| `Aura.Orbs` | 4 | orbs spinning around somebody with an aura |
+| `Shop.Items` | 10 | the catalogue; add a line to add an item |
+| `Sounds.Cues` | — | pitch and volume per event, with optional per-cue ids |
 | `TeleportOnCatch` | true | pull the catcher's whole chain back to Seeker Spawn after a catch |
 | `SaveStats` | true | set false to keep stats to the session |
 
@@ -343,13 +392,19 @@ nothing can fling anybody, and the server does no chain work at all.
 
 ### About the sounds
 
-Every cue is one built-in sample (`rbxasset://sounds/electronicpingshort.wav`)
-played at different pitches — low for a catch, high for a save. Built-in
-`rbxasset://` paths ship with Roblox, so they can never fail with "not
-authorized" the way a private `rbxassetid://` upload does.
+There is one sample in the whole game — `rbxasset://sounds/electronicpingshort.wav`
+— and every cue is that sample at a different pitch. Built-in `rbxasset://`
+paths ship with Roblox itself, so they can never fail with "not authorized"
+the way a private `rbxassetid://` upload does.
 
-When you have your own audio, replace `Config.Sounds.Blip`. Check every id you
-add is owned by you or free to use before you publish.
+Cues with a `chord` play several pitches in quick succession. That is the
+whole trick behind why a Legendary crystal sounds like an event and a Common
+one sounds like a click — four rising notes versus one.
+
+`Config.Sounds.Cues` is the full sheet. Each cue takes an optional `soundId`,
+so you can replace them one at a time as you find audio you own, without
+touching any script. `Config.Sounds.Music` is deliberately empty — only paste
+an id you own, or the whole server gets a red error and silence.
 
 ---
 
@@ -380,6 +435,12 @@ Studio, **Test > Players > 2 Players**:
 - [ ] Radar lights the runners up; a runner who vanishes at the right time is not lit
 - [ ] Earning points floats a +N up the right of the screen
 - [ ] The round starts with 3-2-1-GO and getting tagged shakes the screen
+- [ ] Crystals come in four colours; taking one bursts, plays a chord and shows a card
+- [ ] After a pickup a ring of orbs spins around you for a few seconds
+- [ ] A Legendary crystal announces itself to the whole server when it lands
+- [ ] P opens the store, buying deducts points, and the item equips itself
+- [ ] A bought trail streams behind you when you sprint, and stops when you stop
+- [ ] Buying something does not drop your level
 
 ---
 

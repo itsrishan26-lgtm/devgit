@@ -25,8 +25,17 @@ Three systems give the map itself something to do, all in `MapEvents` and all
 placed at runtime by raycasting for flat ground - nothing in the map needs
 tagging or marking:
 
-* **Energy crystals** - eight pickups. Runners get stamina back plus a speed
-  burst, seekers get a smaller burst, so both sides contest them.
+* **Energy crystals** - eight pickups, each rolling its own rarity when it
+  lands: Common 62%, Rare 26%, Epic 9%, Legendary 3%. Legendary announces
+  itself to the whole server, so it is an event rather than a better drop.
+  Rarity is communicated by colour alone, reused across the crystal, its
+  burst, the card and the aura. Seekers get `Pickups.SeekerScale` of the
+  speed reward.
+* **Store** - Points buy trails, auras, chain colours and titles from
+  `Config.Shop.Items`. Cosmetic only, deliberately. Ownership is a comma
+  separated string attribute (`OwnedItems`) plus one `Equipped<Kind>` per
+  slot, all saved with the stats. Spending reduces `Points` but never
+  `TotalPoints`, which is what levels read.
 * **Beacon** - a marked circle that moves every 35s and pays runners a point a
   second for standing in it. Pulls people out of the corners and tells seekers
   where to look. The HUD carries a needle pointing at it.
@@ -71,6 +80,7 @@ ServerScriptService
   CatchDetection       Script  proximity tagging + the catch sequence
   MapEvents            Script  pickups, beacon, rescue (optional, self-contained)
   Powerups             Script  the three abilities and their cooldowns
+  Shop                 Script  purchases, equipping, ownership
 
 StarterPlayer/StarterPlayerScripts
   Sprint               LocalScript  sprint, stamina, stamina bar, mobile button
@@ -78,6 +88,7 @@ StarterPlayer/StarterPlayerScripts
   ChainVisuals         LocalScript  chain, outlines, leash, danger glow, map props
   ScoreboardUI         LocalScript  Tab scoreboard and the results panel
   AbilityBar           LocalScript  ability buttons, cooldown sweeps, dash impulse
+  ShopUI               LocalScript  the store panel
 
 Workspace
   ChainTagMap          Folder (runtime): pickups and the beacon

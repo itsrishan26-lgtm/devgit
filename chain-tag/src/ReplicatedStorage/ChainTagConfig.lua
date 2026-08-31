@@ -127,11 +127,53 @@ Config.Pickups = {
 	RespawnTime = 22,     -- a taken pickup comes back somewhere new
 	Radius = 6,
 	Hover = 3,
-	Stamina = 60,
-	RunnerSpeed = 5,      -- extra walk speed
-	SeekerSpeed = 3,
-	SpeedTime = 4,
-	Color = Color3.fromRGB(120, 255, 190),
+	SeekerScale = 0.6,    -- seekers get this fraction of the speed reward
+}
+
+-- Rarity ladder. Weights are picked so Common and Rare feel like scenery,
+-- Epic feels like a find, and Legendary is a genuine event - it announces
+-- itself to the whole server when it lands, so people race for it.
+-- Colour is the only thing that communicates rarity, and it is used
+-- consistently: crystal, light, collection burst, popup card and aura.
+Config.Rarities = {
+	{
+		name = "Common", weight = 62, color = Color3.fromRGB(120, 255, 190),
+		size = 1.7, light = 12, spin = 1.6,
+		stamina = 40, speed = 4, duration = 4, points = 0,
+		announce = false, cue = "PickupCommon",
+	},
+	{
+		name = "Rare", weight = 26, color = Color3.fromRGB(88, 170, 255),
+		size = 2.0, light = 17, spin = 2.1,
+		stamina = 70, speed = 6, duration = 5, points = 5,
+		announce = false, cue = "PickupRare",
+	},
+	{
+		name = "Epic", weight = 9, color = Color3.fromRGB(190, 120, 255),
+		size = 2.4, light = 23, spin = 2.8,
+		stamina = 100, speed = 8, duration = 6, points = 15,
+		announce = false, cue = "PickupEpic",
+	},
+	{
+		name = "Legendary", weight = 3, color = Color3.fromRGB(255, 200, 80),
+		size = 2.9, light = 32, spin = 3.6,
+		stamina = 140, speed = 11, duration = 8, points = 40,
+		announce = true, cue = "PickupLegendary",
+	},
+}
+
+-- The ring of orbs that spins around you after a pickup, and the burst the
+-- crystal leaves behind. Both are built out of plain parts on each client,
+-- so there is no texture to load and nothing to replicate.
+Config.Aura = {
+	Orbs = 4,
+	Radius = 2.6,
+	Height = 0.1,
+	OrbSize = 0.45,
+	Spin = 2.4,           -- radians per second
+	BurstShards = 8,
+	BurstTime = 0.45,
+	BurstSpread = 7,
 }
 
 -- A marked circle that moves around the map. Runners earn points every
@@ -247,9 +289,73 @@ Config.DangerRadius = 38
 --------------------------------------------------------------------------
 
 Config.Sounds = {
+	-- The one sample everything is built from. It ships with Roblox, so it
+	-- can never fail with "not authorized" like a private upload.
 	Blip = "rbxasset://sounds/electronicpingshort.wav",
-	CatchVolume = 0.5,
 	UiVolume = 0.35,
+	CatchVolume = 0.5,
+
+	-- Each cue is that sample at a different pitch. A cue with `chord`
+	-- plays several pitches in quick succession, which is what makes the
+	-- rarer pickups and the level-up sound like an event rather than a
+	-- click. Swap in your own SoundId per cue once you own one.
+	Cues = {
+		Click =           { pitch = 1.20, volume = 0.22 },
+		Deny =            { pitch = 0.50, volume = 0.20 },
+		AbilityUse =      { pitch = 1.60, volume = 0.30 },
+		AbilityReady =    { pitch = 1.35, volume = 0.26 },
+		CountdownTick =   { pitch = 1.00, volume = 0.35 },
+		RoundStart =      { chord = { 1.2, 1.6 }, volume = 0.40 },
+		Catch =           { pitch = 1.10, volume = 0.35 },
+		Caught =          { pitch = 0.62, volume = 0.50 },
+		Rescue =          { chord = { 1.2, 1.6 }, volume = 0.40 },
+		Beacon =          { chord = { 1.1, 1.4 }, volume = 0.32 },
+		Win =             { chord = { 1.2, 1.5, 1.9 }, volume = 0.45 },
+		Lose =            { chord = { 0.9, 0.7 }, volume = 0.45 },
+		LevelUp =         { chord = { 1.2, 1.5, 1.9 }, volume = 0.42 },
+		Purchase =        { chord = { 1.3, 1.7 }, volume = 0.40 },
+		PickupCommon =    { pitch = 1.30, volume = 0.28 },
+		PickupRare =      { chord = { 1.3, 1.7 }, volume = 0.34 },
+		PickupEpic =      { chord = { 1.2, 1.5, 1.9 }, volume = 0.40 },
+		PickupLegendary = { chord = { 1.0, 1.3, 1.6, 2.1 }, volume = 0.52 },
+	},
+	ChordGap = 0.07,      -- seconds between the notes of a chord
+
+	-- Background music. Left empty on purpose: only paste an id you own or
+	-- know is free to use, or the whole server gets a red error and silence.
+	Music = "",
+	MusicVolume = 0.18,
+}
+
+--------------------------------------------------------------------------
+-- THE STORE
+-- Everything costs Points, which you earn by playing. Nothing here touches
+-- how the game plays - they are all cosmetic on purpose, so nobody can buy
+-- an advantage with a grind. Spending Points never lowers your level:
+-- levels come from TotalPoints, which only ever goes up.
+--------------------------------------------------------------------------
+
+Config.Shop = {
+	Enabled = true,
+	Items = {
+		-- Trails stream behind you while you sprint.
+		{ id = "trail_mint",   kind = "Trail", name = "Mint Trail",   price = 60,  color = Color3.fromRGB(120, 255, 190) },
+		{ id = "trail_ember",  kind = "Trail", name = "Ember Trail",  price = 120, color = Color3.fromRGB(255, 138, 76) },
+		{ id = "trail_violet", kind = "Trail", name = "Violet Trail", price = 220, color = Color3.fromRGB(190, 120, 255) },
+
+		-- Auras orbit you all round long.
+		{ id = "aura_sky",     kind = "Aura",  name = "Sky Aura",     price = 180, color = Color3.fromRGB(88, 170, 255) },
+		{ id = "aura_gold",    kind = "Aura",  name = "Gold Aura",    price = 450, color = Color3.fromRGB(255, 200, 80) },
+
+		-- Chain colours apply to the chain you are dragging.
+		{ id = "chain_bronze", kind = "Chain", name = "Bronze Chain", price = 140, color = Color3.fromRGB(196, 132, 74) },
+		{ id = "chain_frost",  kind = "Chain", name = "Frost Chain",  price = 260, color = Color3.fromRGB(168, 226, 255) },
+
+		-- Titles float over your head.
+		{ id = "title_quick",  kind = "Title", name = "QUICK",     price = 100, text = "QUICK" },
+		{ id = "title_ghost",  kind = "Title", name = "GHOST",     price = 300, text = "GHOST" },
+		{ id = "title_warden", kind = "Title", name = "WARDEN",    price = 500, text = "WARDEN" },
+	},
 }
 
 -- Prints extra detail to the Output window while you are building.

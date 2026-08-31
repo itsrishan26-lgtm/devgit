@@ -27,6 +27,7 @@ local Config = require(script.Parent:WaitForChild("ChainTagConfig"))
 local REQUIRED_CONFIG = {
 	"Speeds", "Stamina", "Chain", "Colors", "Sounds", "Points",
 	"Map", "Pickups", "Beacon", "Rescue", "Abilities", "Levels", "Combo",
+	"Rarities", "Aura", "Shop",
 }
 
 do
@@ -49,7 +50,7 @@ Shared.Config = Config
 local IS_SERVER = RunService:IsServer()
 
 -- Remote names created under ReplicatedStorage.ChainTagRemotes.
-local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup" }
+local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop" }
 
 -- Default values for every replicated state attribute. Listing them here means
 -- the client never reads a nil attribute, so the HUD is correct on frame one.
@@ -146,10 +147,167 @@ function Shared.timeLeft()
 	return math.max(0, endsAt - workspace:GetServerTimeNow())
 end
 
--- Total points earned turns into a level: 2 at 40 points, 3 at 160, 4 at
--- 360. Both sides work it out the same way so they can never disagree.
+-- Levels come from TotalPoints - everything a player has ever earned - and
+-- never from the Points they can spend in the store, so buying a trail can
+-- never cost you a level. 2 at 40, 3 at 160, 4 at 360. Both sides work it
+-- out the same way so they can never disagree.
 function Shared.levelFromPoints(points)
 	return 1 + math.floor(math.sqrt(math.max(0, points or 0) / Config.Levels.PointsPerLevel))
+end
+
+function Shared.playerLevel(player)
+	--------------------------------------------------------------------------
+-- Client-only: one place that makes every noise in the game
+--------------------------------------------------------------------------
+
+if not IS_SERVER then
+	local SoundService = game:GetService("SoundService")
+
+	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
+	-- pitches in quick succession, which is what separates "you picked
+	-- something up" from "you picked something rare up".
+	function Shared.playCue(cueName, volumeScale)
+		local cue = Config.Sounds.Cues[cueName]
+		if not cue or Config.Sounds.Blip == "" then
+			return
+		end
+		local pitches = cue.chord or { cue.pitch or 1 }
+		for index, pitch in ipairs(pitches) do
+			task.delay((index - 1) * Config.Sounds.ChordGap, function()
+				local sound = Instance.new("Sound")
+				sound.SoundId = cue.soundId or Config.Sounds.Blip
+				sound.PlaybackSpeed = pitch
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Parent = SoundService
+				SoundService:PlayLocalSound(sound)
+				task.delay(3, function()
+					sound:Destroy()
+				end)
+			end)
+		end
+	end
+end
+
+return Shared.levelFromPoints(player and player:GetAttribute("TotalPoints") or 0)
+end
+
+-- Weighted roll down the rarity ladder in ChainTagConfig.
+function Shared.rollRarity()
+	local total = 0
+	for _, rarity in ipairs(Config.Rarities) do
+		total += rarity.weight
+	end
+	local roll = math.random() * total
+	for _, rarity in ipairs(Config.Rarities) do
+		roll -= rarity.weight
+		if roll <= 0 then
+			return rarity
+		end
+	end
+	return Config.Rarities[1]
+end
+
+function Shared.rarity(name)
+	for _, rarity in ipairs(Config.Rarities) do
+		if rarity.name == name then
+			return rarity
+		end
+	end
+	return Config.Rarities[1]
+end
+
+function Shared.shopItem(id)
+	if not id or id == "" then
+		return nil
+	end
+	for _, item in ipairs(Config.Shop.Items) do
+		if item.id == id then
+			return item
+		end
+	end
+	return nil
+end
+
+-- Owned items ride along as one comma separated string, because an
+-- attribute cannot hold a table and this has to replicate to the client.
+function Shared.ownedSet(player)
+	local owned = {}
+	for id in string.gmatch(player:GetAttribute("OwnedItems") or "", "[^,]+") do
+		owned[id] = true
+	end
+	return owned
+end
+
+function Shared.owns(player, id)
+	--------------------------------------------------------------------------
+-- Client-only: one place that makes every noise in the game
+--------------------------------------------------------------------------
+
+if not IS_SERVER then
+	local SoundService = game:GetService("SoundService")
+
+	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
+	-- pitches in quick succession, which is what separates "you picked
+	-- something up" from "you picked something rare up".
+	function Shared.playCue(cueName, volumeScale)
+		local cue = Config.Sounds.Cues[cueName]
+		if not cue or Config.Sounds.Blip == "" then
+			return
+		end
+		local pitches = cue.chord or { cue.pitch or 1 }
+		for index, pitch in ipairs(pitches) do
+			task.delay((index - 1) * Config.Sounds.ChordGap, function()
+				local sound = Instance.new("Sound")
+				sound.SoundId = cue.soundId or Config.Sounds.Blip
+				sound.PlaybackSpeed = pitch
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Parent = SoundService
+				SoundService:PlayLocalSound(sound)
+				task.delay(3, function()
+					sound:Destroy()
+				end)
+			end)
+		end
+	end
+end
+
+return Shared.ownedSet(player)[id] == true
+end
+
+function Shared.equipped(player, kind)
+	--------------------------------------------------------------------------
+-- Client-only: one place that makes every noise in the game
+--------------------------------------------------------------------------
+
+if not IS_SERVER then
+	local SoundService = game:GetService("SoundService")
+
+	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
+	-- pitches in quick succession, which is what separates "you picked
+	-- something up" from "you picked something rare up".
+	function Shared.playCue(cueName, volumeScale)
+		local cue = Config.Sounds.Cues[cueName]
+		if not cue or Config.Sounds.Blip == "" then
+			return
+		end
+		local pitches = cue.chord or { cue.pitch or 1 }
+		for index, pitch in ipairs(pitches) do
+			task.delay((index - 1) * Config.Sounds.ChordGap, function()
+				local sound = Instance.new("Sound")
+				sound.SoundId = cue.soundId or Config.Sounds.Blip
+				sound.PlaybackSpeed = pitch
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Parent = SoundService
+				SoundService:PlayLocalSound(sound)
+				task.delay(3, function()
+					sound:Destroy()
+				end)
+			end)
+		end
+	end
+end
+
+return Shared.shopItem(player:GetAttribute("Equipped" .. kind))
 end
 
 function Shared.isSeeker(player)
@@ -325,10 +483,14 @@ if IS_SERVER then
 		local value = stats and stats:FindFirstChild(statName)
 		if value then
 			value.Value = value.Value + amount
-			-- Every point a player earns floats up their screen, wherever it
-			-- came from - a catch, the beacon, a prison break, surviving.
-			if statName == "Points" and amount > 0 and Shared.Remotes then
-				Shared.Remotes.Popup:FireClient(player, "+" .. amount)
+			if statName == "Points" and amount > 0 then
+				-- Lifetime total, for levels. Points itself is a balance the
+				-- store spends down; this only ever climbs.
+				player:SetAttribute("TotalPoints", (player:GetAttribute("TotalPoints") or 0) + amount)
+				-- And it floats up the screen, wherever it came from.
+				if Shared.Remotes then
+					Shared.Remotes.Popup:FireClient(player, "+" .. amount)
+				end
 			end
 			return
 		end
@@ -340,6 +502,38 @@ if IS_SERVER then
 	function Shared.toast(text, kind)
 		if Shared.Remotes then
 			Shared.Remotes.Toast:FireAllClients(text, kind or "info")
+		end
+	end
+end
+
+--------------------------------------------------------------------------
+-- Client-only: one place that makes every noise in the game
+--------------------------------------------------------------------------
+
+if not IS_SERVER then
+	local SoundService = game:GetService("SoundService")
+
+	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
+	-- pitches in quick succession, which is what separates "you picked
+	-- something up" from "you picked something rare up".
+	function Shared.playCue(cueName, volumeScale)
+		local cue = Config.Sounds.Cues[cueName]
+		if not cue or Config.Sounds.Blip == "" then
+			return
+		end
+		local pitches = cue.chord or { cue.pitch or 1 }
+		for index, pitch in ipairs(pitches) do
+			task.delay((index - 1) * Config.Sounds.ChordGap, function()
+				local sound = Instance.new("Sound")
+				sound.SoundId = cue.soundId or Config.Sounds.Blip
+				sound.PlaybackSpeed = pitch
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Parent = SoundService
+				SoundService:PlayLocalSound(sound)
+				task.delay(3, function()
+					sound:Destroy()
+				end)
+			end)
 		end
 	end
 end

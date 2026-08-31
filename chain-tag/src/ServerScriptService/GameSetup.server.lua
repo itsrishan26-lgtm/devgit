@@ -93,7 +93,7 @@ local function validateSetup()
 		if scripts:FindFirstChild("CatchCountdownUI") then
 			warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
 		end
-		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI", "AbilityBar" }) do
+		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI", "AbilityBar", "ShopUI" }) do
 			local found = scripts:FindFirstChild(name)
 			if not found then
 				warn(string.format("[ChainTag] StarterPlayerScripts.%s is missing - add it as a LocalScript " ..
@@ -112,6 +112,7 @@ local function validateSetup()
 		{ name = "CatchDetection", required = true, does = "nobody can be tagged at all" },
 		{ name = "MapEvents", required = false, does = "no pickups, no beacon, no prison breaks" },
 		{ name = "Powerups", required = false, does = "no abilities, and the ability bar stays hidden" },
+		{ name = "Shop", required = false, does = "the store will refuse every purchase" },
 	}
 	for _, entry in ipairs(SERVER_SCRIPTS) do
 		local found = serverScripts:FindFirstChild(entry.name)
@@ -167,8 +168,12 @@ local runnerTeam = ensureTeam("Runners", BrickColor.new("Bright blue"))
 -- Saved stats
 --------------------------------------------------------------------------
 
-local STAT_KEYS = { "Points", "Catches", "Wins", "Survivals", "RoundsPlayed" }
+local STAT_KEYS = { "Points", "TotalPoints", "Catches", "Wins", "Survivals", "RoundsPlayed", "Rescues" }
 local LEADERSTAT_KEYS = { Points = true, Catches = true }
+
+-- Saved the same way, but they hold text rather than numbers: what the
+-- player owns from the store, and what they have equipped in each slot.
+local TEXT_KEYS = { "OwnedItems", "EquippedTrail", "EquippedAura", "EquippedChain", "EquippedTitle" }
 
 local statStore
 local statsWorking = Config.SaveStats
@@ -226,6 +231,9 @@ local function setupStats(player)
 			player:SetAttribute(key, 0)
 		end
 	end
+	for _, key in ipairs(TEXT_KEYS) do
+		player:SetAttribute(key, "")
+	end
 end
 
 local function loadStats(player)
@@ -270,6 +278,17 @@ local function loadStats(player)
 			writeStat(player, statKey, data[statKey])
 		end
 	end
+	for _, textKey in ipairs(TEXT_KEYS) do
+		if type(data[textKey]) == "string" then
+			player:SetAttribute(textKey, data[textKey])
+		end
+	end
+
+	-- Saves from before lifetime points existed only have a balance, so
+	-- seed the total from it rather than resetting everybody to level 1.
+	if type(data.TotalPoints) ~= "number" and type(data.Points) == "number" then
+		player:SetAttribute("TotalPoints", data.Points)
+	end
 end
 
 local function saveStats(player)
@@ -279,6 +298,9 @@ local function saveStats(player)
 	local payload = {}
 	for _, key in ipairs(STAT_KEYS) do
 		payload[key] = readStat(player, key)
+	end
+	for _, key in ipairs(TEXT_KEYS) do
+		payload[key] = tostring(player:GetAttribute(key) or "")
 	end
 
 	savesInFlight += 1

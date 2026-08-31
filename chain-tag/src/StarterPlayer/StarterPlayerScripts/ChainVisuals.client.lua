@@ -22,9 +22,11 @@
 --]]
 
 local CollectionService = game:GetService("CollectionService")
+local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Shared = require(ReplicatedStorage:WaitForChild("ChainTagShared"))
 local Config = Shared.Config
@@ -104,7 +106,7 @@ local function anchorPoint(root)
 	return root.CFrame:PointToWorldSpace(Vector3.new(0, -0.6, 0))
 end
 
-local function drawChain(set, fromPosition, toPosition)
+local function drawChain(set, fromPosition, toPosition, color)
 	local count = #set.parts
 	local sag = ChainConfig.Sag
 	local step = 1 / (count + 1)
@@ -114,6 +116,9 @@ local function drawChain(set, fromPosition, toPosition)
 	end
 
 	for index, part in ipairs(set.parts) do
+		if part.Color ~= color then
+			part.Color = color
+		end
 		local t = index * step
 		local position = samplePoint(t)
 		local ahead = samplePoint(math.min(1, t + step))
@@ -177,6 +182,239 @@ beaconLabel.TextColor3 = Config.Colors.Warn
 beaconLabel.TextSize = 15
 beaconLabel.TextStrokeTransparency = 0.4
 beaconLabel.Parent = beacon
+
+--------------------------------------------------------------------------
+-- Collection burst
+-- Built out of plain neon parts and thrown away by Debris. No texture to
+-- load, so there is nothing here that can fail with a red error.
+--------------------------------------------------------------------------
+
+local function newEffectPart(size, color)
+	local part = Instance.new("Part")
+	part.Size = size
+	part.Color = color
+	part.Material = Enum.Material.Neon
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Parent = folder
+	return part
+end
+
+local function spawnBurst(position, rarity)
+	local life = Config.Aura.BurstTime
+
+	-- A flat ring that pushes outwards and fades.
+	local ring = newEffectPart(Vector3.new(0.4, 2, 2), rarity.color)
+	ring.Shape = Enum.PartType.Cylinder
+	ring.CFrame = CFrame.new(position) * CFrame.Angles(0, 0, math.pi * 0.5)
+	ring.Transparency = 0.2
+	TweenService:Create(ring, TweenInfo.new(life, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(0.4, rarity.size * 9, rarity.size * 9),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(ring, life + 0.1)
+
+	-- Shards thrown outwards. Rarer crystals throw more of them.
+	local shards = Config.Aura.BurstShards + math.floor(rarity.size * 2)
+	for index = 1, shards do
+		local angle = (index / shards) * math.pi * 2
+		local shard = newEffectPart(Vector3.new(0.35, 0.35, 0.9), rarity.color)
+		shard.CFrame = CFrame.new(position)
+		local away = Vector3.new(math.cos(angle), 0.55, math.sin(angle)) * Config.Aura.BurstSpread
+		TweenService:Create(shard, TweenInfo.new(life, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			CFrame = CFrame.new(position + away) * CFrame.Angles(angle, angle, 0),
+			Transparency = 1,
+			Size = Vector3.new(0.05, 0.05, 0.2),
+		}):Play()
+		Debris:AddItem(shard, life + 0.1)
+	end
+end
+
+Shared.Remotes.Collect.OnClientEvent:Connect(function(position, rarityName)
+	spawnBurst(position, Shared.rarity(rarityName))
+end)
+
+--------------------------------------------------------------------------
+-- Auras: the ring of orbs that spins around somebody, either because they
+-- just took a crystal or because they bought one in the store.
+--------------------------------------------------------------------------
+
+local auras = {}   -- [player] = { orbs = {Part}, color = Color3 }
+
+local function isHidden(other)
+	-- Vanish only hides the character itself. The aura and the trail are
+	-- separate parts, so without this they would keep drawing a neat little
+	-- marker over the exact spot a "hidden" player is standing.
+	return other ~= player
+		and (other:GetAttribute("VanishUntil") or 0) > workspace:GetServerTimeNow()
+end
+
+local function auraColor(other)
+	if isHidden(other) then
+		return nil
+	end
+	if (other:GetAttribute("AuraUntil") or 0) > workspace:GetServerTimeNow() then
+		return Shared.rarity(other:GetAttribute("AuraRarity")).color
+	end
+	local bought = Shared.equipped(other, "Aura")
+	return bought and bought.color or nil
+end
+
+local function clearAura(other)
+	local set = auras[other]
+	if not set then
+		return
+	end
+	for _, orb in ipairs(set.orbs) do
+		orb:Destroy()
+	end
+	auras[other] = nil
+end
+
+local function updateAuras(clock)
+	for _, other in ipairs(Players:GetPlayers()) do
+		local color = auraColor(other)
+		local root = color and Shared.getRoot(other) or nil
+
+		if root then
+			local set = auras[other]
+			if not set then
+				local orbs = {}
+				for index = 1, Config.Aura.Orbs do
+					orbs[index] = newEffectPart(
+						Vector3.new(Config.Aura.OrbSize, Config.Aura.OrbSize, Config.Aura.OrbSize), color)
+					orbs[index].Shape = Enum.PartType.Ball
+				end
+				set = { orbs = orbs }
+				auras[other] = set
+			end
+			if set.color ~= color then
+				set.color = color
+				for _, orb in ipairs(set.orbs) do
+					orb.Color = color
+				end
+			end
+
+			local count = #set.orbs
+			for index, orb in ipairs(set.orbs) do
+				local angle = clock * Config.Aura.Spin + (index / count) * math.pi * 2
+				orb.CFrame = CFrame.new(root.Position + Vector3.new(
+					math.cos(angle) * Config.Aura.Radius,
+					Config.Aura.Height + math.sin(clock * 3 + index) * 0.25,
+					math.sin(angle) * Config.Aura.Radius))
+			end
+		elseif auras[other] then
+			clearAura(other)
+		end
+	end
+end
+
+--------------------------------------------------------------------------
+-- Store cosmetics: trails and titles
+--------------------------------------------------------------------------
+
+local trails = {}   -- [player] = Trail
+
+local function refreshTrail(other)
+	local item = Shared.equipped(other, "Trail")
+	local root = Shared.getRoot(other)
+	local existing = trails[other]
+
+	if not (item and root) then
+		if existing then
+			existing:Destroy()
+			trails[other] = nil
+		end
+		return
+	end
+
+	-- Compare against the *current* root: after a respawn the old trail is
+	-- still parented to the previous character's root, which is not nil.
+	if not (existing and existing.Parent == root) then
+		if existing then
+			existing:Destroy()
+		end
+		local top = Instance.new("Attachment")
+		top.Name = "CT_TrailTop"
+		top.Position = Vector3.new(0, 0.8, 0)
+		top.Parent = root
+
+		local bottom = Instance.new("Attachment")
+		bottom.Name = "CT_TrailBottom"
+		bottom.Position = Vector3.new(0, -0.8, 0)
+		bottom.Parent = root
+
+		existing = Instance.new("Trail")
+		existing.Attachment0 = top
+		existing.Attachment1 = bottom
+		existing.Lifetime = 0.45
+		existing.LightEmission = 1
+		existing.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		existing.Parent = root
+		trails[other] = existing
+	end
+	existing.Color = ColorSequence.new(item.color)
+end
+
+-- Other people's sprint key presses are not replicated, but their speed is,
+-- so the trail keys off how fast they are actually moving.
+local function updateTrails()
+	for other, trail in pairs(trails) do
+		local root = Shared.getRoot(other)
+		trail.Enabled = root ~= nil
+			and not isHidden(other)
+			and root.AssemblyLinearVelocity.Magnitude > 19
+	end
+end
+
+local titles = {}   -- [player] = BillboardGui
+
+local function refreshTitle(other)
+	local item = Shared.equipped(other, "Title")
+	local head = other.Character and other.Character:FindFirstChild("Head")
+	local existing = titles[other]
+
+	if not (item and head) then
+		if existing then
+			existing:Destroy()
+			titles[other] = nil
+		end
+		return
+	end
+
+	if not (existing and existing.Parent) then
+		existing = Instance.new("BillboardGui")
+		existing.Name = "CT_Title"
+		existing.Size = UDim2.fromOffset(150, 20)
+		existing.StudsOffsetWorldSpace = Vector3.new(0, 2.4, 0)
+		existing.AlwaysOnTop = false
+		existing.MaxDistance = 90
+		existing.Parent = folder
+
+		local label = Instance.new("TextLabel")
+		label.Name = "Label"
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.GothamBlack
+		label.TextSize = 13
+		label.TextStrokeTransparency = 0.4
+		label.Parent = existing
+		titles[other] = existing
+	end
+
+	existing.Adornee = head
+	local label = existing:FindFirstChild("Label")
+	if label then
+		label.Text = item.text or item.name
+		label.TextColor3 = item.color or Config.Colors.Neutral
+	end
+end
 
 --------------------------------------------------------------------------
 -- Who is chained to whom (rebuilt a few times a second, not every frame)
@@ -261,12 +499,28 @@ local function rebuildRelationships()
 		and beaconTarget.Character:FindFirstChild("Head")
 	beacon.Adornee = head
 	beacon.Enabled = head ~= nil
+
+	-- Store cosmetics only change when somebody buys or equips something,
+	-- so they are rebuilt here rather than every frame.
+	for _, other in ipairs(Players:GetPlayers()) do
+		refreshTrail(other)
+		refreshTitle(other)
+	end
 end
 
 Players.PlayerRemoving:Connect(function(leaving)
 	dropLinkSet(leaving)
 	clearHighlight(leaving)
 	faded[leaving] = nil
+	clearAura(leaving)
+	if trails[leaving] then
+		trails[leaving]:Destroy()
+		trails[leaving] = nil
+	end
+	if titles[leaving] then
+		titles[leaving]:Destroy()
+		titles[leaving] = nil
+	end
 end)
 
 --------------------------------------------------------------------------
@@ -359,8 +613,9 @@ RunService.RenderStepped:Connect(function()
 	for _, part in ipairs(pickupParts) do
 		local base = part:GetAttribute("Base")
 		if base and part.Transparency < 1 then
+			local spin = part:GetAttribute("Spin") or 1.6
 			part.CFrame = CFrame.new(base + Vector3.new(0, math.sin(clock * 2) * 0.4, 0))
-				* CFrame.Angles(0.4, clock * 1.6, 0)
+				* CFrame.Angles(0.4, clock * spin, 0)
 		end
 	end
 
@@ -370,6 +625,8 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	updateVanish()
+	updateAuras(clock)
+	updateTrails()
 
 	local cameraPosition = camera.CFrame.Position
 	local renderDistanceSquared = ChainConfig.RenderDistance * ChainConfig.RenderDistance
@@ -386,7 +643,8 @@ RunService.RenderStepped:Connect(function()
 			local offset = from - cameraPosition
 			if offset:Dot(offset) <= renderDistanceSquared then
 				setLinkSetShown(set, true)
-				drawChain(set, from, to)
+				local bought = Shared.equipped(link.owner, "Chain")
+				drawChain(set, from, to, bought and bought.color or ChainConfig.Color)
 			else
 				setLinkSetShown(set, false)
 			end
