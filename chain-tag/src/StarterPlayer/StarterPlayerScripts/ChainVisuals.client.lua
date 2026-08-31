@@ -21,6 +21,7 @@
 	  CT_Danger      0..1 how close the nearest seeker is, read by ChainTagUI
 --]]
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -227,6 +228,9 @@ local function rebuildRelationships()
 		-- Outlines
 		if not hunting or not inRound or not other.Character then
 			clearHighlight(other)
+		elseif other:GetAttribute("Immune") == true then
+			-- Just broken out of the chain and briefly untouchable.
+			setHighlight(other, Config.Colors.Good, true)
 		elseif Shared.isSeeker(other) then
 			setHighlight(other, Config.Colors.Seeker, false)
 		elseif lastRunnerId == other.UserId and Config.LastRunnerBeacon then
@@ -256,9 +260,23 @@ Players.PlayerRemoving:Connect(function(leaving)
 	clearHighlight(leaving)
 end)
 
+--------------------------------------------------------------------------
+-- Map props (spawned by MapEvents, animated here so the server never has
+-- to replicate a spinning part sixty times a second)
+--------------------------------------------------------------------------
+
+local pickupParts = {}
+local beaconParts = {}
+
+local function refreshProps()
+	pickupParts = CollectionService:GetTagged("ChainTagPickup")
+	beaconParts = CollectionService:GetTagged("ChainTagBeacon")
+end
+
 task.spawn(function()
 	while true do
 		rebuildRelationships()
+		refreshProps()
 		task.wait(0.25)
 	end
 end)
@@ -280,6 +298,23 @@ local function setLocalAttribute(name, value, epsilon)
 end
 
 RunService.RenderStepped:Connect(function()
+	local clock = os.clock()
+
+	-- Crystals spin and bob around the resting spot the server stamped on
+	-- them. A hidden one sits at y = -500 and is skipped.
+	for _, part in ipairs(pickupParts) do
+		local base = part:GetAttribute("Base")
+		if base and part.Transparency < 1 then
+			part.CFrame = CFrame.new(base + Vector3.new(0, math.sin(clock * 2) * 0.4, 0))
+				* CFrame.Angles(0.4, clock * 1.6, 0)
+		end
+	end
+
+	-- The beacon ring breathes so it reads as live from across the park.
+	for _, part in ipairs(beaconParts) do
+		part.Transparency = 0.55 + math.sin(clock * 2.4) * 0.12
+	end
+
 	local cameraPosition = camera.CFrame.Position
 	local renderDistanceSquared = ChainConfig.RenderDistance * ChainConfig.RenderDistance
 

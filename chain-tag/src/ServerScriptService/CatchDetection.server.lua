@@ -117,6 +117,10 @@ local function doCatch(catcher, victim)
 	-- Flip the role immediately so nobody else can tag the same runner.
 	victim:SetAttribute("IsSeeker", true)
 	victim:SetAttribute("ChainedTo", catcher.UserId)
+	-- Marks them as a prisoner rather than the original seeker, which is
+	-- what makes them eligible to be broken out again (see MapEvents).
+	victim:SetAttribute("CaughtThisRound", true)
+	victim:SetAttribute("BeingRescued", false)
 	local seekerTeam = Teams:FindFirstChild("Seekers")
 	if seekerTeam then
 		victim.Team = seekerTeam
@@ -188,7 +192,9 @@ task.spawn(function()
 						if (nextCatchAt[player] or 0) <= os.clock() then
 							table.insert(seekers, { player = player, root = root })
 						end
-					else
+					elseif player:GetAttribute("Immune") ~= true then
+						-- Someone just broken out of the chain is briefly
+						-- untouchable, so they are not instantly re-tagged.
 						table.insert(runners, { player = player, root = root })
 					end
 				end

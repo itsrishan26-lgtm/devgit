@@ -43,6 +43,8 @@ local STATE_DEFAULTS = {
 	Winner = "",                -- "" | "Seekers" | "Runners" | "None"
 	ResultText = "",
 	SoloPractice = false,
+	BeaconActive = false,       -- set by MapEvents
+	BeaconPosition = Vector3.zero,
 }
 
 --------------------------------------------------------------------------

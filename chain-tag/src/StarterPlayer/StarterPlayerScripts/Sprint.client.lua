@@ -109,6 +109,14 @@ player.CharacterAdded:Connect(function()
 	currentSpeed = Config.Speeds.RunnerWalk
 end)
 
+-- MapEvents bumps this counter when you pick up an energy crystal.
+player:GetAttributeChangedSignal("StaminaGrant"):Connect(function()
+	stamina = math.min(maxStamina(), stamina + Config.Pickups.Stamina)
+	if exhausted and stamina >= Config.Stamina.MinToRestart then
+		exhausted = false
+	end
+end)
+
 local function setBarVisible(visible)
 	if visible == barVisible then
 		return
@@ -154,7 +162,10 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	-- Set by ChainVisuals: 1 normally, lower while the chain is stretched.
 	local chainSlow = player:GetAttribute("CT_ChainSlow") or 1
 
-	local target = (sprinting and sprintSpeed or walkSpeed) * chainSlow
+	-- Short speed burst from a pickup, on top of everything else.
+	local burst = player:GetAttribute("SpeedBonus") or 0
+
+	local target = (sprinting and sprintSpeed or walkSpeed) * chainSlow + burst
 	if frozen then
 		target = 0
 	end

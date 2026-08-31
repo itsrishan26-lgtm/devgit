@@ -103,6 +103,63 @@ Config.Chain = {
 }
 
 --------------------------------------------------------------------------
+-- THE MAP
+-- Pickups and beacons find their own ground by raycasting downwards, so
+-- they work on any map without you marking or tagging a single part.
+-- Radius is measured out from Center; keep it inside your grass so nothing
+-- spawns in the water.
+--------------------------------------------------------------------------
+
+Config.Map = {
+	Center = Vector3.new(0, 0, 0),
+	Radius = 170,
+	ScanHeight = 300,     -- raycasts start this high and look straight down
+	MinSpacing = 30,      -- studs between two spawned things
+	MinGroundNormal = 0.75, -- how flat a surface has to be to count as ground
+}
+
+-- Glowing crystals scattered around the park. Runners get their stamina
+-- back plus a short burst of speed; seekers get a smaller burst. Both sides
+-- want them, so they become places worth fighting over.
+Config.Pickups = {
+	Enabled = true,
+	Count = 8,
+	RespawnTime = 22,     -- a taken pickup comes back somewhere new
+	Radius = 6,
+	Hover = 3,
+	Stamina = 60,
+	RunnerSpeed = 5,      -- extra walk speed
+	SeekerSpeed = 3,
+	SpeedTime = 4,
+	Color = Color3.fromRGB(120, 255, 190),
+}
+
+-- A marked circle that moves around the map. Runners earn points every
+-- second they stand in it, which drags people out of the boring corners -
+-- and tells the seekers exactly where to look.
+Config.Beacon = {
+	Enabled = true,
+	Radius = 24,
+	MoveEvery = 35,
+	StartAfter = 15,      -- seconds into the round before the first one
+	PointsPerSecond = 1,
+	Color = Color3.fromRGB(255, 205, 90),
+}
+
+-- Free a teammate: stand next to somebody on the end of a chain and hold
+-- your ground. Gives runners something to do besides run, and gives the
+-- seeker team a reason to guard its chain instead of splitting up.
+Config.Rescue = {
+	Enabled = true,
+	Radius = 9,
+	HoldTime = 4,
+	Immunity = 3,          -- seconds the freed player cannot be re-tagged
+	Points = 20,
+	OncePerPlayer = true,  -- each player can only be freed once a round
+	BlockedInEndgame = true, -- no rescues once the runners get revealed
+}
+
+--------------------------------------------------------------------------
 -- SCORING  (Points and Catches show on the player list)
 --------------------------------------------------------------------------
 
@@ -110,6 +167,8 @@ Config.Points = {
 	Catch = 10,       -- per runner you personally tag
 	Survive = 25,     -- for being uncaught when the timer runs out
 	SeekerWin = 15,   -- to every seeker when the team catches everyone
+	-- beacon points are Config.Beacon.PointsPerSecond
+	-- rescue points are Config.Rescue.Points
 }
 
 Config.SaveStats = true                    -- set false to keep stats session-only

@@ -58,6 +58,7 @@ Insert two **Script**s (the plain kind, not LocalScript) under
 |---|---|
 | `GameSetup` | `src/ServerScriptService/GameSetup.server.lua` |
 | `CatchDetection` | `src/ServerScriptService/CatchDetection.server.lua` |
+| `MapEvents` | `src/ServerScriptService/MapEvents.server.lua` |
 
 If you already have scripts with these names, paste over them completely.
 
@@ -70,6 +71,7 @@ Insert three **LocalScript**s under `StarterPlayer > StarterPlayerScripts`:
 | `Sprint` | `src/StarterPlayer/StarterPlayerScripts/Sprint.client.lua` |
 | `ChainTagUI` | `src/StarterPlayer/StarterPlayerScripts/ChainTagUI.client.lua` |
 | `ChainVisuals` | `src/StarterPlayer/StarterPlayerScripts/ChainVisuals.client.lua` |
+| `ScoreboardUI` | `src/StarterPlayer/StarterPlayerScripts/ScoreboardUI.client.lua` |
 
 ### Step 5 — delete the old stuff
 
@@ -93,9 +95,16 @@ The Output window should show:
 ```
 [ChainTag] GameSetup running. Round length 120s, 2 player(s) needed.
 [ChainTag] CatchDetection running. Tag range 6 studs.
+[ChainTag] MapEvents running. Pickups: true, beacon: true, rescue: true
 [ChainTag] ChainTagUI loaded and listening.
 [ChainTag] ChainVisuals loaded. Chain mode: Leash
+[ChainTag] ScoreboardUI loaded. Hold Tab.
 ```
+
+Only the first three lines come from the server. **If the last three are
+missing, the LocalScripts are not installed** — and `GameSetup` will name
+each missing one in a warning, including if you added it as the wrong class
+(a Script instead of a LocalScript).
 
 Testing alone? Open `ChainTagConfig` and set `Config.MinPlayers = 1`. You get a
 solo practice round (no seeker, nothing to catch) so you can walk the map and
@@ -121,12 +130,17 @@ ReplicatedStorage
 ServerScriptService
   GameSetup                     Script         round loop, roles, scoring
   CatchDetection                Script         tagging
+  MapEvents                     Script         pickups, beacon, rescue
 
 StarterPlayer
   StarterPlayerScripts
     Sprint                      LocalScript    sprint + stamina bar
     ChainTagUI                  LocalScript    the whole HUD
     ChainVisuals                LocalScript    chain, outlines, leash
+    ScoreboardUI                LocalScript    Tab scoreboard + results
+
+Workspace
+  ChainTagMap                   (made at runtime) pickups and the beacon
 ```
 
 ---
@@ -158,6 +172,34 @@ only the two players involved froze.
 **Winning:** seekers win by chaining everyone before the timer ends. Runners win
 if a single one of them is still free when it hits zero.
 
+### Things to do in the park
+
+Three systems run during the round. None of them need you to mark or place
+anything — every position is found at runtime by raycasting for flat ground
+inside `Config.Map.Radius` of `Config.Map.Center`.
+
+**Energy crystals.** Eight glowing pickups scattered on the ground. A runner
+gets their stamina bar refilled plus four seconds of extra speed; a seeker
+gets a smaller burst. Both sides want them, so they become ground worth
+fighting over. A taken one comes back somewhere new 22 seconds later.
+
+**The beacon.** A marked circle that lands somewhere random 15 seconds into
+the round and moves every 35 seconds. Runners score a point per second while
+they stand in it. It drags people out of the far corners and tells the
+seekers exactly where to go — the whole point is that both sides know. Your
+HUD shows a needle pointing at it and the distance.
+
+**Prison breaks.** Stand within nine studs of somebody on the *end* of a
+chain and hold your ground for four seconds: they are cut loose and go back
+to being a runner, untouchable for three seconds so they cannot be instantly
+re-tagged. Worth 20 points to whoever frees them. Only the end of a chain can
+be freed, each player only once per round, and rescues are locked out once
+the endgame reveal starts — otherwise a big enough runner team could stall
+forever.
+
+This is the biggest change to how the game plays. If you want it off, set
+`Config.Rescue.Enabled = false` and everything else carries on working.
+
 **Anti-camping:** with 30 seconds left, every remaining runner is outlined
 through walls for the seeker team. When one runner is left, everybody sees a
 `LAST RUNNER` marker over them. Hiding in a bush until the timer runs out does
@@ -186,6 +228,10 @@ the startup check that warns you about a broken setup.
 **`CatchDetection`** (Script) — checks seeker-to-runner distance ten times a
 second, confirms with one raycast, and runs the catch sequence.
 
+**`MapEvents`** (Script) — the pickups, the beacon and the rescue mechanic.
+Deliberately separate: if you delete this script the game still runs a
+perfectly good round without it.
+
 **`Sprint`** (LocalScript) — hold Shift, L3 on a gamepad, or the on-screen
 button on mobile. Stamina drains while sprinting and regrows when you stop.
 Runners have a bigger tank than seekers, which is the runners' main defence.
@@ -195,8 +241,11 @@ catch countdown, the win banner, the catch feed, and the red edge glow that
 grows as a seeker closes in on you.
 
 **`ChainVisuals`** (LocalScript) — draws the chain, outlines seekers (red),
-reveals runners in the endgame, marks the last runner, and works out how much
-the chain slows you down.
+reveals runners in the endgame, marks the last runner, spins the pickups and
+pulses the beacon, and works out how much the chain slows you down.
+
+**`ScoreboardUI`** (LocalScript) — hold Tab for role, catches, prison breaks
+and points. Opens on its own when a round ends.
 
 ### How the scripts talk to each other
 
@@ -232,6 +281,11 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 | `Chain.Mode` | `"Leash"` | `"Visual"` draws the chain without slowing anyone, `"Off"` removes it |
 | `Chain.MaxDistance` | 22 | how far chained players can stretch apart |
 | `EndgameRevealAt` | 30 | seconds left when runners get outlined |
+| `Map.Radius` | 170 | how far out from centre pickups and beacons can land |
+| `Pickups.Count` | 8 | crystals on the map at once; 0 or `Enabled = false` to remove |
+| `Beacon.MoveEvery` | 35 | seconds before the beacon jumps somewhere new |
+| `Rescue.Enabled` | true | prison breaks; false removes the mechanic entirely |
+| `Rescue.HoldTime` | 4 | seconds you have to hold to free someone |
 | `TeleportOnCatch` | true | pull the catcher's whole chain back to Seeker Spawn after a catch |
 | `SaveStats` | true | set false to keep stats to the session |
 
@@ -277,6 +331,10 @@ Studio, **Test > Players > 2 Players**:
 - [ ] Points and Catches appear on the player list and go up
 - [ ] Resetting your character mid-round puts you back at the right spawn with your role intact
 - [ ] Shift sprints, the stamina bar drains and refills, and it stops at zero
+- [ ] Crystals are scattered on the ground, spin, and refill stamina when touched
+- [ ] A beacon appears 15s in, the HUD needle points at it, and standing in it earns points
+- [ ] Standing next to a chained player fills the FREEING bar and cuts them loose
+- [ ] Tab opens the scoreboard, and it opens by itself when the round ends
 
 ---
 
@@ -292,6 +350,10 @@ Not done, deliberately, because they are map and asset work rather than code:
 3. **Map flow.** The head start is 8 seconds; if runners cannot get anywhere
    useful in that time the map needs more cover near Runner Spawn, or a longer
    `HeadStart`.
+4. **Cover.** A radial map with long straight paths gives seekers sightlines
+   down every spoke. Runners need objects they can *loop around* to break a
+   chase — hedge blocks, sheds, a raised deck with two staircases. That is
+   map building, not code, but it is what decides whether the game is fun.
 
 ---
 

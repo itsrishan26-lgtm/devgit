@@ -326,6 +326,125 @@ do
 	end
 end
 
+-- Beacon marker -----------------------------------------------------------
+-- A needle that swings to point at the beacon when it is off screen, and a
+-- diamond over it when it is in view. Built out of plain Frames rather than
+-- arrow glyphs, which not every font has.
+
+local beaconMarker = create("Frame", {
+	Name = "BeaconMarker",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Size = UDim2.fromOffset(80, 80),
+	BackgroundTransparency = 1,
+	Visible = false,
+	ZIndex = 4,
+	Parent = gui,
+})
+
+local beaconNeedleHolder = create("Frame", {
+	Name = "Needle",
+	Size = UDim2.fromScale(1, 1),
+	BackgroundTransparency = 1,
+	ZIndex = 4,
+	Parent = beaconMarker,
+})
+
+local beaconNeedle = create("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.fromScale(0.5, 0),
+	Size = UDim2.fromOffset(6, 15),
+	BackgroundColor3 = Config.Beacon.Color,
+	BorderSizePixel = 0,
+	ZIndex = 4,
+	Parent = beaconNeedleHolder,
+})
+corner(3, beaconNeedle)
+
+local beaconDot = create("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	Size = UDim2.fromOffset(11, 11),
+	Rotation = 45,
+	BackgroundColor3 = Config.Beacon.Color,
+	BorderSizePixel = 0,
+	ZIndex = 4,
+	Parent = beaconMarker,
+})
+corner(2, beaconDot)
+
+local beaconLabel = create("TextLabel", {
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0.5, 12),
+	Size = UDim2.fromOffset(80, 14),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "",
+	TextColor3 = Config.Beacon.Color,
+	TextSize = 12,
+	TextStrokeTransparency = 0.5,
+	ZIndex = 4,
+	Parent = beaconMarker,
+})
+
+-- Rescue progress ---------------------------------------------------------
+
+local rescueHolder = create("Frame", {
+	Name = "Rescue",
+	AnchorPoint = Vector2.new(0.5, 1),
+	Position = UDim2.new(0.5, 0, 1, -74),
+	Size = UDim2.fromOffset(280, 34),
+	BackgroundTransparency = 1,
+	Visible = false,
+	Parent = gui,
+})
+
+local rescueLabel = create("TextLabel", {
+	Size = UDim2.new(1, 0, 0, 16),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "",
+	TextColor3 = Config.Colors.Good,
+	TextSize = 14,
+	TextStrokeTransparency = 0.55,
+	Parent = rescueHolder,
+})
+
+local rescueTrack = create("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 20),
+	Size = UDim2.fromOffset(220, 6),
+	BackgroundColor3 = Color3.fromRGB(12, 14, 18),
+	BackgroundTransparency = 0.35,
+	BorderSizePixel = 0,
+	Parent = rescueHolder,
+})
+corner(3, rescueTrack)
+
+local rescueFill = create("Frame", {
+	Size = UDim2.fromScale(0, 1),
+	BackgroundColor3 = Config.Colors.Good,
+	BorderSizePixel = 0,
+	Parent = rescueTrack,
+})
+corner(3, rescueFill)
+
+-- Immunity pill -----------------------------------------------------------
+
+local immuneLabel = create("TextLabel", {
+	Name = "Immune",
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 140),
+	Size = UDim2.fromOffset(180, 18),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "UNTOUCHABLE",
+	TextColor3 = Config.Colors.Good,
+	TextSize = 14,
+	TextStrokeTransparency = 0.55,
+	Visible = false,
+	Parent = gui,
+})
+
 -- Chain taut warning ------------------------------------------------------
 
 local tautLabel = create("TextLabel", {
@@ -383,6 +502,8 @@ local toastColors = {
 	catch = Config.Colors.Seeker,
 	seeker = Config.Colors.Seeker,
 	warn = Config.Colors.Warn,
+	beacon = Config.Beacon.Color,
+	rescue = Config.Colors.Good,
 	info = Color3.fromRGB(210, 216, 226),
 }
 
@@ -620,6 +741,72 @@ Remotes.Toast.OnClientEvent:Connect(pushToast)
 -- Per frame: clock, vignette, taut warning
 --------------------------------------------------------------------------
 
+-- Points the marker at the beacon: straight at it when it is on screen,
+-- clamped to a ring around the middle of the screen when it is not.
+local function updateBeaconMarker(phase)
+	local active = State:GetAttribute("BeaconActive") == true and phase == "Round"
+	beaconMarker.Visible = active
+	if not active then
+		return
+	end
+
+	local camera = workspace.CurrentCamera
+	local target = State:GetAttribute("BeaconPosition") or Vector3.zero
+	local viewport = camera.ViewportSize
+	local centre = viewport / 2
+
+	-- WorldToViewportPoint, not WorldToScreenPoint: this ScreenGui ignores
+	-- the top bar inset, so the un-inset coordinates are the matching pair.
+	local screenPoint, onScreen = camera:WorldToViewportPoint(target)
+	local direction = Vector2.new(screenPoint.X, screenPoint.Y) - centre
+	if screenPoint.Z <= 0 then
+		direction = -direction   -- behind the camera: flip it round
+	end
+
+	local inView = onScreen and screenPoint.Z > 0
+	if not inView then
+		local edge = math.min(viewport.X, viewport.Y) * 0.36
+		direction = direction.Magnitude > 0.001 and direction.Unit * edge or Vector2.new(0, -edge)
+	end
+
+	local position = centre + direction
+	beaconMarker.Position = UDim2.fromOffset(position.X, position.Y)
+	beaconNeedleHolder.Visible = not inView
+	beaconNeedleHolder.Rotation = math.deg(math.atan2(direction.Y, direction.X)) + 90
+
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	beaconLabel.Text = root
+		and string.format("%dm", math.floor((root.Position - target).Magnitude))
+		or "BEACON"
+end
+
+-- Shown to the rescuer while they hold, and to the prisoner being freed.
+local function updateRescueBar()
+	local progress = player:GetAttribute("RescueProgress") or 0
+	local beingRescued = player:GetAttribute("BeingRescued") == true
+
+	if progress > 0 then
+		local targetId = player:GetAttribute("RescueTargetId") or 0
+		local target = targetId ~= 0 and Players:GetPlayerByUserId(targetId) or nil
+		rescueLabel.Text = target and ("FREEING " .. string.upper(target.Name)) or "FREEING"
+	elseif beingRescued then
+		-- Find whoever is working on us so the bar shows their progress.
+		for _, other in ipairs(Players:GetPlayers()) do
+			if other:GetAttribute("RescueTargetId") == player.UserId then
+				progress = other:GetAttribute("RescueProgress") or 0
+				break
+			end
+		end
+		rescueLabel.Text = "BEING FREED - STAY PUT"
+	end
+
+	local show = progress > 0
+	rescueHolder.Visible = show
+	if show then
+		rescueFill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
+	end
+end
+
 local lastTimerText = ""
 local phaseTextClock = 0
 local phaseLengths = {
@@ -676,6 +863,11 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	if taut then
 		tautLabel.TextTransparency = 0.25 + 0.25 * math.sin(os.clock() * 8)
 	end
+
+	immuneLabel.Visible = player:GetAttribute("Immune") == true
+
+	updateBeaconMarker(phase)
+	updateRescueBar()
 end)
 
 -- Round-start countdown beeps for the last three seconds of the head start.

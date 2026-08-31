@@ -21,6 +21,20 @@ Round-based chain tag (Roblox, Luau).
 * With 30 seconds left the remaining runners are outlined through walls for the
   seeker team; the last runner gets a marker everyone can see.
 
+Three systems give the map itself something to do, all in `MapEvents` and all
+placed at runtime by raycasting for flat ground - nothing in the map needs
+tagging or marking:
+
+* **Energy crystals** - eight pickups. Runners get stamina back plus a speed
+  burst, seekers get a smaller burst, so both sides contest them.
+* **Beacon** - a marked circle that moves every 35s and pays runners a point a
+  second for standing in it. Pulls people out of the corners and tells seekers
+  where to look. The HUD carries a needle pointing at it.
+* **Prison breaks** - hold your ground next to the end of a chain for four
+  seconds to free that player. They get three seconds of immunity. Only chain
+  ends, once per player per round, and locked out during the endgame reveal.
+  `Config.Rescue.Enabled = false` removes it cleanly.
+
 ## Map
 
 Baked into Workspace (roughly 400x400 grass base, top at y=0): fountain, loop
@@ -50,11 +64,16 @@ ReplicatedStorage
 ServerScriptService
   GameSetup            Script  round loop, roles, spawning, scoring, saved stats
   CatchDetection       Script  proximity tagging + the catch sequence
+  MapEvents            Script  pickups, beacon, rescue (optional, self-contained)
 
 StarterPlayer/StarterPlayerScripts
   Sprint               LocalScript  sprint, stamina, stamina bar, mobile button
   ChainTagUI           LocalScript  the whole HUD
-  ChainVisuals         LocalScript  chain rendering, outlines, leash, danger glow
+  ChainVisuals         LocalScript  chain, outlines, leash, danger glow, map props
+  ScoreboardUI         LocalScript  Tab scoreboard and the results panel
+
+Workspace
+  ChainTagMap          Folder (runtime): pickups and the beacon
 ```
 
 ## Conventions that matter
@@ -65,8 +84,9 @@ StarterPlayer/StarterPlayerScripts
   (`Waiting`/`Intermission`/`Starting`/`Round`/`Results`), `PhaseEndsAt`
   (server clock), `RunnersLeft`, `TotalRunners`, `SeekerCount`, `Winner`,
   `ResultText`, `EndgameReveal`, `LastRunnerUserId`, `CatchesInProgress`,
-  `SoloPractice`, `PlayersNeeded`. Attributes replicate by themselves, so the
-  HUD needs no per-second RemoteEvent.
+  `SoloPractice`, `PlayersNeeded`, `BeaconActive`, `BeaconPosition`.
+  Attributes replicate by themselves, so the HUD needs no per-second
+  RemoteEvent.
 * **Timers** use `workspace:GetServerTimeNow()` on both sides. The client never
   runs its own countdown.
 * **Freezing** is the `Frozen` attribute, which the client movement script
@@ -98,16 +118,23 @@ caught; on-screen timer, phase, runners-left counter and pips; catch feed;
 danger vignette; endgame reveal and last-runner marker; sprint and stamina
 (mobile button included); teams; Points/Catches on the player list with
 DataStore saving; mid-round joiners sit out and join next round; seeker leaving
-promotes a replacement; solo practice round when `MinPlayers = 1`.
+promotes a replacement; solo practice round when `MinPlayers = 1`; energy
+crystals, the roaming beacon with an on-screen needle, prison breaks with an
+immunity window, and a Tab scoreboard that opens itself on the results.
 
 ## Still open
 
 1. **Map performance** — merge repeated decor into MeshParts, cut lights.
 2. **Audio** — one built-in `rbxasset://` blip pitched for each cue. Music and
    a real catch sound need ids you own. Never ship a private `rbxassetid://`.
-3. **Balance passes** — `HeadStart` and `CatchRadius` want real playtesting on
-   the real map. All of it is in `ChainTagConfig`.
-4. **Not built on purpose** — no shop, no rank progression, no round vote.
+3. **Balance passes** — `HeadStart`, `CatchRadius`, `Rescue.HoldTime` and
+   `Beacon.MoveEvery` want real playtesting on the real map. All of it is in
+   `ChainTagConfig`.
+4. **Map cover** — the park is radial with long straight sightlines down every
+   path, and the outer grass ring is empty. Runners need objects they can loop
+   around to break a chase. Map building, not code, but it decides how the game
+   feels.
+5. **Not built on purpose** — no shop, no rank progression, no round vote.
 
 ## Style for the assistant
 

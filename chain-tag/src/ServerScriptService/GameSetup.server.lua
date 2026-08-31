@@ -84,10 +84,25 @@ local function validateSetup()
 		end
 	end
 
-	-- 3. The old countdown UI is replaced by ChainTagUI; two of them fight.
+	-- 3. The client scripts. A missing one shows up as "nothing on screen"
+	--    with no error anywhere, so it is worth saying out loud.
 	local scripts = StarterPlayer:FindFirstChild("StarterPlayerScripts")
-	if scripts and scripts:FindFirstChild("CatchCountdownUI") then
-		warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
+	if not scripts then
+		warn("[ChainTag] StarterPlayer has no StarterPlayerScripts folder. None of the HUD can run.")
+	else
+		if scripts:FindFirstChild("CatchCountdownUI") then
+			warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
+		end
+		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI" }) do
+			local found = scripts:FindFirstChild(name)
+			if not found then
+				warn(string.format("[ChainTag] StarterPlayerScripts.%s is missing - add it as a LocalScript " ..
+					"(README step 4). Without it that part of the screen simply will not appear.", name))
+			elseif not found:IsA("LocalScript") then
+				warn(string.format("[ChainTag] StarterPlayerScripts.%s is a %s. It has to be a LocalScript, " ..
+					"or a Script with RunContext set to Client.", name, found.ClassName))
+			end
+		end
 	end
 
 	-- 4. Private sound ids fail with "not authorized" and are easy to miss.
@@ -380,6 +395,10 @@ end
 local function publishCounts()
 	local seekers, runners = countRoles()
 	Shared.setState("RunnersLeft", #runners)
+	-- Rescues put runners back in play, so the round total can grow.
+	if #runners > (Shared.getState("TotalRunners") or 0) then
+		Shared.setState("TotalRunners", #runners)
+	end
 	Shared.setState("SeekerCount", #seekers)
 	if Config.LastRunnerBeacon and #runners == 1 then
 		Shared.setState("LastRunnerUserId", runners[1].UserId)
@@ -410,11 +429,25 @@ local function waitPhase(keepGoing)
 	return true
 end
 
+local ROUND_ATTRIBUTES = {
+	CaughtThisRound = false,
+	Rescued = false,
+	Immune = false,
+	BeingRescued = false,
+	InBeacon = false,
+	RescueProgress = 0,
+	RescueTargetId = 0,
+	SpeedBonus = 0,
+}
+
 local function resetEveryone()
 	for _, player in ipairs(Players:GetPlayers()) do
 		setRole(player, false, true)
 		Shared.setAnchored(player, false)
 		Shared.setFrozen(player, false)
+		for key, value in pairs(ROUND_ATTRIBUTES) do
+			player:SetAttribute(key, value)
+		end
 	end
 	Shared.setState("EndgameReveal", false)
 	Shared.setState("LastRunnerUserId", 0)
