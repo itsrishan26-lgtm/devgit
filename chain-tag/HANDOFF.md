@@ -1,0 +1,120 @@
+# Chain Tag — project handoff
+
+Paste this file at the start of a new AI session to hand over the project.
+It replaces the older handoff doc; the code layout described here is what is in
+`chain-tag/src`.
+
+## The game
+
+Round-based chain tag (Roblox, Luau).
+
+* One player is the seeker and starts at **Seeker Spawn** (red). Everyone else
+  are runners and start at **Runner Spawn** (blue).
+* Seekers get an 8 second freeze at the start so runners can scatter.
+* A seeker within 6 studs of a runner, with line of sight, catches them: a red
+  3-2-1 plays on every screen, then the catcher's entire chain plus the new
+  prisoner is pulled back to Seeker Spawn and released. The caught player is
+  now a seeker. Losing position on every catch is what keeps a long chain from
+  steamrolling the round.
+* Seekers win by catching everyone before the timer. If one runner is still
+  free when it hits zero, runners win.
+* With 30 seconds left the remaining runners are outlined through walls for the
+  seeker team; the last runner gets a marker everyone can see.
+
+## Map
+
+Baked into Workspace (roughly 400x400 grass base, top at y=0): fountain, loop
+path, playground, picnic zone, formal garden, grove, lamp posts, trees,
+flowers, invisible boundary walls. Decor has `CastShadow = false`.
+
+Two `SpawnLocation`s named exactly `Seeker Spawn` and `Runner Spawn`, both with
+`Enabled = false` and `Neutral = true` — the round script does the spawning.
+If either is missing, `GameSetup` creates a grey placeholder and warns in the
+Output window.
+
+Part count is high. Merging repeated decor into MeshParts is the remaining
+performance job; nothing in the code depends on how the map is built.
+
+## Code
+
+Seven scripts. Setup instructions, exact names and a test checklist are in
+`chain-tag/README.md`.
+
+```
+ReplicatedStorage
+  ChainTagConfig       ModuleScript  every tunable number, nothing else
+  ChainTagShared       ModuleScript  remotes + state folder + shared helpers
+  ChainTagRemotes      Folder (runtime): CatchCountdown, Toast
+  ChainTagState        Folder (runtime): the attributes the HUD reads
+
+ServerScriptService
+  GameSetup            Script  round loop, roles, spawning, scoring, saved stats
+  CatchDetection       Script  proximity tagging + the catch sequence
+
+StarterPlayer/StarterPlayerScripts
+  Sprint               LocalScript  sprint, stamina, stamina bar, mobile button
+  ChainTagUI           LocalScript  the whole HUD
+  ChainVisuals         LocalScript  chain rendering, outlines, leash, danger glow
+```
+
+## Conventions that matter
+
+* **Roles** are player attributes: `IsSeeker`, `InRound`, `Frozen`,
+  `ChainedTo` (the catcher's UserId). Server writes, everyone reads.
+* **Round state** is attributes on `ReplicatedStorage.ChainTagState`: `Phase`
+  (`Waiting`/`Intermission`/`Starting`/`Round`/`Results`), `PhaseEndsAt`
+  (server clock), `RunnersLeft`, `TotalRunners`, `SeekerCount`, `Winner`,
+  `ResultText`, `EndgameReveal`, `LastRunnerUserId`, `CatchesInProgress`,
+  `SoloPractice`, `PlayersNeeded`. Attributes replicate by themselves, so the
+  HUD needs no per-second RemoteEvent.
+* **Timers** use `workspace:GetServerTimeNow()` on both sides. The client never
+  runs its own countdown.
+* **Freezing** is the `Frozen` attribute, which the client movement script
+  obeys. The server does not fight the client over `WalkSpeed`. The 3 second
+  catch countdown additionally anchors the HumanoidRootPart.
+* **`CT_` attributes** (`CT_ChainSlow`, `CT_ChainTaut`, `CT_Danger`) are written
+  by `ChainVisuals` on the local client only and read by the other two
+  LocalScripts. They do not replicate.
+* `_G.GameActive` is still set by `GameSetup` for older scripts, but nothing in
+  this codebase reads it.
+
+## Two deliberate changes from the original build
+
+1. **Catching is proximity based, not `.Touched`.** A 10 Hz distance check plus
+   one raycast for line of sight. `.Touched` missed fast passes, double-fired,
+   and let people tag through thin walls.
+2. **The chain is not physics.** No `RopeConstraint`s, no welded parts. Each
+   client draws the chain locally and both ends are slowed as they drift apart
+   (`Config.Chain.SlowStart` .. `MaxDistance`). Ropes between two player
+   characters are a tug of war between two machines' physics ownership, which
+   is what made long chains jostly and occasionally launched people.
+
+## Working
+
+Round loop with all five phases; head start; proximity catching gated to the
+Round phase; 3-2-1 countdown; chain drawing and leash; win/lose both ways with
+a result banner and survivor names; early finish when the last runner is
+caught; on-screen timer, phase, runners-left counter and pips; catch feed;
+danger vignette; endgame reveal and last-runner marker; sprint and stamina
+(mobile button included); teams; Points/Catches on the player list with
+DataStore saving; mid-round joiners sit out and join next round; seeker leaving
+promotes a replacement; solo practice round when `MinPlayers = 1`.
+
+## Still open
+
+1. **Map performance** — merge repeated decor into MeshParts, cut lights.
+2. **Audio** — one built-in `rbxasset://` blip pitched for each cue. Music and
+   a real catch sound need ids you own. Never ship a private `rbxassetid://`.
+3. **Balance passes** — `HeadStart` and `CatchRadius` want real playtesting on
+   the real map. All of it is in `ChainTagConfig`.
+4. **Not built on purpose** — no shop, no rank progression, no round vote.
+
+## Style for the assistant
+
+* The developer is fairly new to Roblox/Luau. Give complete, copy-paste-ready
+  scripts, not fragments. Say exactly where each goes (service + Script vs
+  LocalScript vs ModuleScript) and flag names that must match the Explorer
+  exactly, like `Seeker Spawn`.
+* Keep comments and prints useful for debugging.
+* When something "does not work", ask what the Output window says before
+  guessing.
