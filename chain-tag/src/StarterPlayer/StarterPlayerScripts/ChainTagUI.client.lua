@@ -20,6 +20,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = require(ReplicatedStorage:WaitForChild("ChainTagShared"))
@@ -542,6 +543,10 @@ end
 local shakeUntil, shakeStrength = 0, 0
 
 local function addShake(strength, duration)
+	-- Off on Low, and off for anyone who turned it off in Settings.
+	if not Shared.quality().shake or Shared.settings().shake == 0 then
+		return
+	end
 	shakeStrength = math.max(shakeStrength, strength)
 	shakeUntil = math.max(shakeUntil, os.clock() + duration)
 end
@@ -556,6 +561,99 @@ RunService:BindToRenderStep("ChainTagShake", Enum.RenderPriority.Camera.Value + 
 	camera.CFrame = camera.CFrame
 		* CFrame.new((math.random() - 0.5) * amount, (math.random() - 0.5) * amount, 0)
 end)
+
+-- Music ------------------------------------------------------------------
+-- Two sound objects so tracks crossfade instead of cutting. With no ids in
+-- Config.Music.Tracks this does nothing at all and says nothing about it,
+-- which is the correct behaviour for a game shipped without music.
+
+local function makeMusicSound()
+	local sound = Instance.new("Sound")
+	sound.Name = "ChainTagMusic"
+	sound.Looped = true
+	sound.Volume = 0
+	sound.Parent = SoundService
+	return sound
+end
+
+local musicA, musicB = makeMusicSound(), makeMusicSound()
+local activeMusic = musicA
+local currentTrackId = ""
+
+local function musicVolume()
+	return Config.Music.Volume * (Shared.settings().mus / 100)
+end
+
+local function setMusicTrack(id)
+	if not Config.Music.Enabled or id == currentTrackId then
+		return
+	end
+	currentTrackId = id
+
+	local outgoing = activeMusic
+	local incoming = (activeMusic == musicA) and musicB or musicA
+	activeMusic = incoming
+
+	TweenService:Create(outgoing, TweenInfo.new(Config.Music.FadeTime), { Volume = 0 }):Play()
+	task.delay(Config.Music.FadeTime, function()
+		if outgoing.SoundId ~= currentTrackId then
+			outgoing:Stop()
+		end
+	end)
+
+	if id == "" then
+		return
+	end
+	incoming.SoundId = id
+	incoming.Volume = 0
+	incoming:Play()
+	TweenService:Create(incoming, TweenInfo.new(Config.Music.FadeTime),
+		{ Volume = musicVolume() }):Play()
+end
+
+local function trackForPhase(phase)
+	if phase == "Round" then
+		-- The last stretch gets its own track, which is the single cheapest
+		-- way to make a round feel like it is ending.
+		if Shared.timeLeft() <= Config.EndgameRevealAt then
+			return Config.Music.Tracks.Final
+		end
+		return Config.Music.Tracks.Round
+	elseif phase == "Results" then
+		return Config.Music.Tracks.Results
+	end
+	return Config.Music.Tracks.Lobby
+end
+
+player:GetAttributeChangedSignal("Settings"):Connect(function()
+	if activeMusic.IsPlaying then
+		activeMusic.Volume = musicVolume()
+	end
+end)
+
+-- Heartbeat ---------------------------------------------------------------
+-- The one sound allowed to play continuously, because it tells you
+-- something the HUD cannot: how close the thing behind you is.
+
+local nextBeatAt = 0
+
+local function updateHeartbeat(danger)
+	if not Config.Heartbeat.Enabled or danger < Config.Heartbeat.StartAt then
+		nextBeatAt = 0
+		return
+	end
+	if os.clock() < nextBeatAt then
+		return
+	end
+	-- Danger runs StartAt..1; map that onto slow..fast.
+	local span = math.max(0.01, 1 - Config.Heartbeat.StartAt)
+	local closeness = math.clamp((danger - Config.Heartbeat.StartAt) / span, 0, 1)
+	local interval = Config.Heartbeat.SlowInterval
+		+ (Config.Heartbeat.FastInterval - Config.Heartbeat.SlowInterval) * closeness
+
+	Shared.playCue("Heartbeat", 0.6 + closeness * 0.6)
+	nextBeatAt = os.clock() + interval
+end
 
 local function showIntro(text, color)
 	introLabel.Visible = true
@@ -976,6 +1074,7 @@ Remotes.Collect.OnClientEvent:Connect(function(_, rarityName, collectorId)
 	end
 end)
 
+
 -- Levels come from total points, so the moment to celebrate one is when the
 -- points value itself changes.
 local level = Shared.playerLevel(player)
@@ -1060,6 +1159,7 @@ end
 
 local lastTimerText = ""
 local phaseTextClock = 0
+local musicTimer = 0
 local phaseLengths = {
 	Intermission = Config.Intermission,
 	Starting = Config.HeadStart,
@@ -1104,6 +1204,15 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	-- Danger glow, written by ChainVisuals: 0 = clear, 1 = a seeker is on you.
 	local danger = player:GetAttribute("CT_Danger") or 0
 	vignette.Visible = danger > 0.01
+	updateHeartbeat(danger)
+
+	-- Music only needs checking a few times a second, and the Round to
+	-- Final swap is the only one that is not driven by a phase change.
+	musicTimer -= deltaTime
+	if musicTimer <= 0 then
+		musicTimer = 0.5
+		setMusicTrack(trackForPhase(phase))
+	end
 	for _, bar in ipairs(vignetteBars) do
 		local goal = 1 - danger * 0.55
 		bar.BackgroundTransparency += (goal - bar.BackgroundTransparency) * math.min(1, deltaTime * 6)
@@ -1130,7 +1239,9 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	end
 
 	-- Speed streaks follow the sprint flag the Sprint script publishes.
+	-- Low quality turns them off entirely.
 	local sprinting = player:GetAttribute("CT_Sprinting") == true
+		and Shared.quality().streaks
 	for _, streak in ipairs(streaks) do
 		local goal = sprinting and 0.82 or 1
 		streak.BackgroundTransparency += (goal - streak.BackgroundTransparency) * math.min(1, deltaTime * 7)

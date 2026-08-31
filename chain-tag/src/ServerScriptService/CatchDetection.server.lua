@@ -59,14 +59,41 @@ local function bumpCatchesInProgress(delta)
 	Shared.setState("CatchesInProgress", math.max(0, current + delta))
 end
 
+-- The line-of-sight raycast ignores every character, and that list only
+-- changes when somebody joins, leaves or respawns. Rebuilding it ten times
+-- a second was allocating a table per tick for no reason.
+local filterCache = nil
+
+local function invalidateFilter()
+	filterCache = nil
+end
+
 local function characterFilter()
+	if filterCache then
+		return filterCache
+	end
 	local list = {}
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player.Character then
 			table.insert(list, player.Character)
 		end
 	end
+	filterCache = list
 	return list
+end
+
+local function watchPlayer(player)
+	player.CharacterAdded:Connect(invalidateFilter)
+	player.CharacterRemoving:Connect(invalidateFilter)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	invalidateFilter()
+	watchPlayer(player)
+end)
+Players.PlayerRemoving:Connect(invalidateFilter)
+for _, player in ipairs(Players:GetPlayers()) do
+	watchPlayer(player)
 end
 
 local function canSee(fromRoot, toRoot, filter)

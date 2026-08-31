@@ -89,10 +89,35 @@ StarterPlayer/StarterPlayerScripts
   ScoreboardUI         LocalScript  Tab scoreboard and the results panel
   AbilityBar           LocalScript  ability buttons, cooldown sweeps, dash impulse
   ShopUI               LocalScript  the store panel
+  ChainTagSettings     LocalScript  settings panel and the quality dial
 
 Workspace
   ChainTagMap          Folder (runtime): pickups and the beacon
 ```
+
+## Performance model
+
+Everything a client draws runs through one quality level (Low/Medium/High),
+auto-detected on the first join by sampling real frame time for four seconds
+rather than guessing from the device. It scales chain links, draw distances,
+aura orb counts, the pickup burst, speed streaks, screen shake and head
+titles. It never touches gameplay - Low is a shorter chain, never a shorter
+cooldown - so turning settings down can never be an advantage.
+
+Client work is split by cadence. Ten times a second: anything that scans all
+players or walks a character's descendants (vanish fade, aura assignment,
+trail toggling, nearest-seeker danger). Every frame: only moving parts that
+already exist (chain links, aura orbs, crystal spin) plus the chain leash,
+which has to be per frame because it feeds walk speed.
+
+Server side: the tag sweep and the map sweep both run at 10 Hz, the
+line-of-sight raycast filter is cached and invalidated on join/leave/respawn
+rather than rebuilt per tick, and the Settings remote is throttled per player
+and re-validated by round-tripping through parse/serialize.
+
+**StreamingEnabled cannot be set from a script.** It is a Workspace property
+and it is the biggest single win available for this map; GameSetup warns in
+Output when it is off and the map is large.
 
 ## Conventions that matter
 
@@ -142,6 +167,35 @@ immunity window, a Tab scoreboard that opens itself on the results, two
 server-checked powerup slots, levels from total points, catch streaks, and the
 screen feedback around them - 3-2-1-GO, catch shake and flash, sprint streaks
 and floating point popups.
+
+## What is NOT built, and why
+
+There is a much larger design brief for this game covering nine game modes,
+five maps, map voting, spectating, parties, private servers, missions, an
+inventory screen, emotes, victory animations, wall running, sliding, vaulting,
+ledge grabs and a seventeen-service architecture.
+
+Almost none of that is built, deliberately. The brief's own build order says
+to make one round of tag extremely fun first and expand from there, and its
+own coding rule says never to replace working systems unnecessarily. What
+exists is one mode (Chain Tag) taken a long way rather than nine modes taken
+nowhere.
+
+If picking that up, the honest order is:
+
+1. **A second mode.** The round loop in `GameSetup` is currently Chain Tag
+   shaped. Extracting a GameMode module with `onRoundStart`, `onCatch` and
+   `checkWinCondition` is the prerequisite for Infection, Freeze Tag and the
+   rest, and it is a refactor of `GameSetup` rather than new systems.
+2. **Movement.** Sliding and vaulting are the highest-value additions for how
+   the game feels, and they are client-predicted with server validation - the
+   same shape as the dash already in `Powerups`.
+3. **Spectating.** Cheap to build and it fixes the worst moment in the game,
+   which is being caught early.
+4. **Maps.** The code assumes nothing about the map except two spawn pads and
+   walkable ground, so a second map needs no code at all.
+
+Anything past that is scope, not craft.
 
 ## Still open
 

@@ -69,9 +69,18 @@ end
 
 local function getLinkSet(owner)
 	local set = links[owner]
+	local wanted = Shared.quality().chainLinks
+	if set and #set.parts ~= wanted then
+		-- Quality changed under us; rebuild at the new link count.
+		for _, part in ipairs(set.parts) do
+			part:Destroy()
+		end
+		set = nil
+		links[owner] = nil
+	end
 	if not set then
 		local parts = {}
-		for index = 1, ChainConfig.Links do
+		for index = 1, wanted do
 			parts[index] = makeLinkPart()
 		end
 		set = { parts = parts, shown = true }
@@ -204,6 +213,9 @@ local function newEffectPart(size, color)
 end
 
 local function spawnBurst(position, rarity)
+	if not Shared.quality().burst then
+		return   -- Low draws the pickup and the sound, but not the confetti
+	end
 	local life = Config.Aura.BurstTime
 
 	-- A flat ring that pushes outwards and fades.
@@ -242,7 +254,7 @@ end)
 -- just took a crystal or because they bought one in the store.
 --------------------------------------------------------------------------
 
-local auras = {}   -- [player] = { orbs = {Part}, color = Color3 }
+local auras = {}   -- [player] = { orbs, color, style, styleName, hidden }
 
 local function isHidden(other)
 	-- Vanish only hides the character itself. The aura and the trail are
@@ -252,15 +264,21 @@ local function isHidden(other)
 		and (other:GetAttribute("VanishUntil") or 0) > workspace:GetServerTimeNow()
 end
 
-local function auraColor(other)
+-- What aura this player should be wearing right now, if any: the one their
+-- last crystal gave them, otherwise whatever they bought.
+local function auraFor(other)
 	if isHidden(other) then
 		return nil
 	end
 	if (other:GetAttribute("AuraUntil") or 0) > workspace:GetServerTimeNow() then
-		return Shared.rarity(other:GetAttribute("AuraRarity")).color
+		local rarity = Shared.rarity(other:GetAttribute("AuraRarity"))
+		return rarity.color, rarity.aura or "Ring"
 	end
 	local bought = Shared.equipped(other, "Aura")
-	return bought and bought.color or nil
+	if bought then
+		return bought.color, bought.style or "Ring"
+	end
+	return nil
 end
 
 local function clearAura(other)
@@ -274,40 +292,112 @@ local function clearAura(other)
 	auras[other] = nil
 end
 
-local function updateAuras(clock)
+local function buildAura(other, color, styleName)
+	clearAura(other)
+
+	local style = Shared.auraStyle(styleName)
+	local scale = Shared.quality().auraScale
+	local count = math.max(2, math.floor(style.orbs * scale + 0.5))
+
+	local orbs = {}
+	for index = 1, count do
+		local size = Config.Aura.OrbSize * (style.size or 1)
+		orbs[index] = newEffectPart(Vector3.new(size, size, size), color)
+		orbs[index].Shape = Enum.PartType.Ball
+	end
+	if style.core then
+		local size = Config.Aura.OrbSize * 1.5
+		local core = newEffectPart(Vector3.new(size, size, size), color)
+		core.Shape = Enum.PartType.Ball
+		table.insert(orbs, core)
+	end
+
+	auras[other] = {
+		orbs = orbs,
+		color = color,
+		style = style,
+		styleName = styleName,
+		hasCore = style.core == true,
+		hidden = false,
+	}
+end
+
+-- Runs on the slow tick: decides who should have an aura, what shape it is,
+-- and whether they are close enough to be worth drawing at all.
+local function refreshAuras(cameraPosition)
+	local cullSquared = Shared.quality().auraDistance ^ 2
+
 	for _, other in ipairs(Players:GetPlayers()) do
-		local color = auraColor(other)
+		local color, styleName = auraFor(other)
 		local root = color and Shared.getRoot(other) or nil
 
-		if root then
-			local set = auras[other]
-			if not set then
-				local orbs = {}
-				for index = 1, Config.Aura.Orbs do
-					orbs[index] = newEffectPart(
-						Vector3.new(Config.Aura.OrbSize, Config.Aura.OrbSize, Config.Aura.OrbSize), color)
-					orbs[index].Shape = Enum.PartType.Ball
-				end
-				set = { orbs = orbs }
-				auras[other] = set
+		if not root then
+			if auras[other] then
+				clearAura(other)
 			end
-			if set.color ~= color then
+		else
+			local set = auras[other]
+			if not set or set.styleName ~= styleName then
+				buildAura(other, color, styleName)
+				set = auras[other]
+			elseif set.color ~= color then
 				set.color = color
 				for _, orb in ipairs(set.orbs) do
 					orb.Color = color
 				end
 			end
 
-			local count = #set.orbs
-			for index, orb in ipairs(set.orbs) do
-				local angle = clock * Config.Aura.Spin + (index / count) * math.pi * 2
-				orb.CFrame = CFrame.new(root.Position + Vector3.new(
-					math.cos(angle) * Config.Aura.Radius,
-					Config.Aura.Height + math.sin(clock * 3 + index) * 0.25,
-					math.sin(angle) * Config.Aura.Radius))
+			-- Far away auras stop being drawn rather than being destroyed,
+			-- so walking in and out of range does not churn parts.
+			local offset = root.Position - cameraPosition
+			local shouldHide = offset:Dot(offset) > cullSquared
+			if shouldHide ~= set.hidden then
+				set.hidden = shouldHide
+				for _, orb in ipairs(set.orbs) do
+					-- Not `shouldHide and nil or folder`: in Lua that always
+					-- lands on folder, because the middle term is nil.
+					if shouldHide then
+						orb.Parent = nil
+					else
+						orb.Parent = folder
+					end
+				end
 			end
-		elseif auras[other] then
-			clearAura(other)
+		end
+	end
+end
+
+-- Runs every frame, and does nothing but move parts that already exist.
+local function positionAuras(clock)
+	for other, set in pairs(auras) do
+		if not set.hidden then
+			local root = Shared.getRoot(other)
+			if root then
+				local style = set.style
+				local count = #set.orbs
+				local orbiting = set.hasCore and count - 1 or count
+				local radius = style.radius or Config.Aura.Radius
+				local baseHeight = style.height or Config.Aura.Height
+				local rings = style.rings or 1
+
+				for index, orb in ipairs(set.orbs) do
+					if set.hasCore and index == count then
+						-- The core sits above the head and breathes.
+						orb.CFrame = CFrame.new(root.Position
+							+ Vector3.new(0, baseHeight + 0.7 + math.sin(clock * 2.4) * 0.18, 0))
+					else
+						-- Odd rings turn the other way, which is what makes
+						-- the Epic aura read as two rings and not six orbs.
+						local ring = (index - 1) % rings
+						local spin = style.spin * (ring % 2 == 0 and 1 or -1)
+						local angle = clock * spin + (index / orbiting) * math.pi * 2
+						orb.CFrame = CFrame.new(root.Position + Vector3.new(
+							math.cos(angle) * radius,
+							baseHeight + ring * 1.15 + math.sin(clock * 2 + index) * style.drift,
+							math.sin(angle) * radius))
+					end
+				end
+			end
 		end
 	end
 end
@@ -376,7 +466,7 @@ end
 local titles = {}   -- [player] = BillboardGui
 
 local function refreshTitle(other)
-	local item = Shared.equipped(other, "Title")
+	local item = Shared.quality().titles and Shared.equipped(other, "Title") or nil
 	local head = other.Character and other.Character:FindFirstChild("Head")
 	local existing = titles[other]
 
@@ -570,14 +660,14 @@ local function setFade(character, amount)
 	end
 end
 
+-- Walks a character's descendants, so it runs on the slow tick rather than
+-- every frame. Re-applying while hidden is deliberate: it catches parts that
+-- load in late, like accessories.
 local function updateVanish()
-	local now = workspace:GetServerTimeNow()
 	for _, other in ipairs(Players:GetPlayers()) do
 		-- Never fade yourself out: you would lose track of your own
 		-- character. The HUD tells you instead.
-		local hide = other ~= player
-			and (other:GetAttribute("VanishUntil") or 0) > now
-			and other.Character ~= nil
+		local hide = isHidden(other) and other.Character ~= nil
 
 		if hide then
 			setFade(other.Character, Config.Abilities.Vanish.Transparency)
@@ -605,80 +695,11 @@ local function setLocalAttribute(name, value, epsilon)
 	player:SetAttribute(name, value)
 end
 
-RunService.RenderStepped:Connect(function()
-	local clock = os.clock()
-
-	-- Crystals spin and bob around the resting spot the server stamped on
-	-- them. A hidden one sits at y = -500 and is skipped.
-	for _, part in ipairs(pickupParts) do
-		local base = part:GetAttribute("Base")
-		if base and part.Transparency < 1 then
-			local spin = part:GetAttribute("Spin") or 1.6
-			part.CFrame = CFrame.new(base + Vector3.new(0, math.sin(clock * 2) * 0.4, 0))
-				* CFrame.Angles(0.4, clock * spin, 0)
-		end
-	end
-
-	-- The beacon ring breathes so it reads as live from across the park.
-	for _, part in ipairs(beaconParts) do
-		part.Transparency = 0.55 + math.sin(clock * 2.4) * 0.12
-	end
-
-	updateVanish()
-	updateAuras(clock)
-	updateTrails()
-
-	local cameraPosition = camera.CFrame.Position
-	local renderDistanceSquared = ChainConfig.RenderDistance * ChainConfig.RenderDistance
-
-	-- 1. Draw every chain that is close enough to be worth drawing.
-	for _, link in ipairs(pairsList) do
-		local ownerRoot = Shared.getRoot(link.owner)
-		local partnerRoot = Shared.getRoot(link.partner)
-		local set = getLinkSet(link.owner)
-
-		if ownerRoot and partnerRoot then
-			local from = anchorPoint(ownerRoot)
-			local to = anchorPoint(partnerRoot)
-			local offset = from - cameraPosition
-			if offset:Dot(offset) <= renderDistanceSquared then
-				setLinkSetShown(set, true)
-				local bought = Shared.equipped(link.owner, "Chain")
-				drawChain(set, from, to, bought and bought.color or ChainConfig.Color)
-			else
-				setLinkSetShown(set, false)
-			end
-		else
-			setLinkSetShown(set, false)
-		end
-	end
-
-	-- 2. How hard is the chain pulling on me?
-	local slow, taut = 1, false
-	if ChainConfig.Mode == "Leash" and #chainNeighbours > 0 then
-		local myRoot = Shared.getRoot(player)
-		if myRoot then
-			local worst = 0
-			for _, neighbour in ipairs(chainNeighbours) do
-				local otherRoot = Shared.getRoot(neighbour)
-				if otherRoot then
-					worst = math.max(worst, (otherRoot.Position - myRoot.Position).Magnitude)
-				end
-			end
-			if worst > ChainConfig.SlowStart then
-				local span = math.max(0.01, ChainConfig.MaxDistance - ChainConfig.SlowStart)
-				local stretch = math.clamp((worst - ChainConfig.SlowStart) / span, 0, 1)
-				slow = 1 - stretch * (1 - ChainConfig.MinSpeedFactor)
-				taut = stretch >= 0.95
-			end
-		end
-	end
-	setLocalAttribute("CT_ChainSlow", slow, 0.01)
-	setLocalAttribute("CT_ChainTaut", taut)
-
-	-- 3. How close is the nearest seeker? (runners only, during the hunt)
+-- Nearest seeker, for the edge glow and the heartbeat. Scans every player,
+-- so it lives on the slow tick.
+local function updateDanger()
 	local danger = 0
-	if State:GetAttribute("Phase") == "Round"
+	if Shared.getState("Phase") == "Round"
 		and Shared.inRound(player)
 		and not Shared.isSeeker(player)
 	then
@@ -700,6 +721,93 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 	setLocalAttribute("CT_Danger", danger, 0.02)
+end
+
+-- Everything that scans every player, or walks a character's descendants,
+-- runs on this tick instead of every frame. Ten times a second is far more
+-- often than any of it can actually be noticed, and it is six times less
+-- work than the frame loop was doing before.
+local SLOW_TICK = 0.1
+local slowTimer = 0
+
+RunService.RenderStepped:Connect(function(deltaTime)
+	local clock = os.clock()
+	local cameraPosition = camera.CFrame.Position
+	local quality = Shared.quality()
+
+	slowTimer -= deltaTime
+	if slowTimer <= 0 then
+		slowTimer = SLOW_TICK
+		updateVanish()
+		refreshAuras(cameraPosition)
+		updateTrails()
+		updateDanger()
+	end
+
+	-- Crystals spin and bob around the resting spot the server stamped on
+	-- them. A hidden one sits at y = -500 and is skipped.
+	for _, part in ipairs(pickupParts) do
+		local base = part:GetAttribute("Base")
+		if base and part.Transparency < 1 then
+			local spin = part:GetAttribute("Spin") or 1.6
+			part.CFrame = CFrame.new(base + Vector3.new(0, math.sin(clock * 2) * 0.4, 0))
+				* CFrame.Angles(0.4, clock * spin, 0)
+		end
+	end
+
+	-- The beacon ring breathes so it reads as live from across the park.
+	for _, part in ipairs(beaconParts) do
+		part.Transparency = 0.55 + math.sin(clock * 2.4) * 0.12
+	end
+
+	positionAuras(clock)
+
+	-- Chains: draw the ones close enough to matter, park the rest.
+	local renderDistanceSquared = quality.chainDistance * quality.chainDistance
+	for _, link in ipairs(pairsList) do
+		local ownerRoot = Shared.getRoot(link.owner)
+		local partnerRoot = Shared.getRoot(link.partner)
+		local set = getLinkSet(link.owner)
+
+		if ownerRoot and partnerRoot then
+			local from = anchorPoint(ownerRoot)
+			local to = anchorPoint(partnerRoot)
+			local offset = from - cameraPosition
+			if offset:Dot(offset) <= renderDistanceSquared then
+				setLinkSetShown(set, true)
+				local bought = Shared.equipped(link.owner, "Chain")
+				drawChain(set, from, to, bought and bought.color or ChainConfig.Color)
+			else
+				setLinkSetShown(set, false)
+			end
+		else
+			setLinkSetShown(set, false)
+		end
+	end
+
+	-- The leash is the one thing that has to be per frame: it feeds your
+	-- walk speed, and at 10 Hz you would feel it stepping.
+	local slow, taut = 1, false
+	if ChainConfig.Mode == "Leash" and #chainNeighbours > 0 then
+		local myRoot = Shared.getRoot(player)
+		if myRoot then
+			local worst = 0
+			for _, neighbour in ipairs(chainNeighbours) do
+				local otherRoot = Shared.getRoot(neighbour)
+				if otherRoot then
+					worst = math.max(worst, (otherRoot.Position - myRoot.Position).Magnitude)
+				end
+			end
+			if worst > ChainConfig.SlowStart then
+				local span = math.max(0.01, ChainConfig.MaxDistance - ChainConfig.SlowStart)
+				local stretch = math.clamp((worst - ChainConfig.SlowStart) / span, 0, 1)
+				slow = 1 - stretch * (1 - ChainConfig.MinSpeedFactor)
+				taut = stretch >= 0.95
+			end
+		end
+	end
+	setLocalAttribute("CT_ChainSlow", slow, 0.01)
+	setLocalAttribute("CT_ChainTaut", taut)
 end)
 
 print("[ChainTag] ChainVisuals loaded. Chain mode: " .. tostring(ChainConfig.Mode))

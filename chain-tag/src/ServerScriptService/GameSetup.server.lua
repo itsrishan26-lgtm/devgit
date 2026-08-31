@@ -93,7 +93,8 @@ local function validateSetup()
 		if scripts:FindFirstChild("CatchCountdownUI") then
 			warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
 		end
-		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI", "AbilityBar", "ShopUI" }) do
+		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI",
+			"AbilityBar", "ShopUI", "ChainTagSettings" }) do
 			local found = scripts:FindFirstChild(name)
 			if not found then
 				warn(string.format("[ChainTag] StarterPlayerScripts.%s is missing - add it as a LocalScript " ..
@@ -125,7 +126,17 @@ local function validateSetup()
 		end
 	end
 
-	-- 5. Private sound ids fail with "not authorized" and are easy to miss.
+	-- 5. StreamingEnabled is the single biggest performance win available to
+	--    a big map, and it cannot be switched on from a script.
+	local worldParts = #workspace:GetDescendants()
+	if not workspace.StreamingEnabled and worldParts > 3000 then
+		warn(string.format("[ChainTag] Workspace has %d objects and StreamingEnabled is off, so every " ..
+			"player downloads the whole map before they can move. Turn it on: click Workspace in the " ..
+			"Explorer, tick StreamingEnabled in Properties, and set StreamingTargetRadius to 512.",
+			worldParts))
+	end
+
+	-- 6. Private sound ids fail with "not authorized" and are easy to miss.
 	local scanned = 0
 	for _, root in ipairs({ workspace, StarterPack, StarterPlayer, ReplicatedStorage, game:GetService("Lighting"), game:GetService("SoundService") }) do
 		for _, item in ipairs(root:GetDescendants()) do
@@ -173,7 +184,7 @@ local LEADERSTAT_KEYS = { Points = true, Catches = true }
 
 -- Saved the same way, but they hold text rather than numbers: what the
 -- player owns from the store, and what they have equipped in each slot.
-local TEXT_KEYS = { "OwnedItems", "EquippedTrail", "EquippedAura", "EquippedChain", "EquippedTitle" }
+local TEXT_KEYS = { "OwnedItems", "EquippedTrail", "EquippedAura", "EquippedChain", "EquippedTitle", "Settings" }
 
 local statStore
 local statsWorking = Config.SaveStats
@@ -411,6 +422,23 @@ local function onPlayerAdded(player)
 	end
 end
 
+-- Settings come from the client, so they are re-parsed and re-serialized
+-- here: only keys this game knows about, only values inside their ranges,
+-- survive the round trip. Throttled so the remote cannot be spammed.
+local lastSettingsWrite = {}
+
+Shared.Remotes.Settings.OnServerEvent:Connect(function(player, text)
+	if type(text) ~= "string" or #text > 64 then
+		return
+	end
+	local now = os.clock()
+	if (lastSettingsWrite[player] or 0) > now - 0.25 then
+		return
+	end
+	lastSettingsWrite[player] = now
+	player:SetAttribute("Settings", Shared.serializeSettings(Shared.parseSettings(text)))
+end)
+
 Players.PlayerAdded:Connect(onPlayerAdded)
 for _, player in ipairs(Players:GetPlayers()) do
 	task.spawn(onPlayerAdded, player)
@@ -418,6 +446,7 @@ end
 
 Players.PlayerRemoving:Connect(function(player)
 	spawnSlot[player] = nil
+	lastSettingsWrite[player] = nil
 	task.spawn(saveStats, player)
 end)
 

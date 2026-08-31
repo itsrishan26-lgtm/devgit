@@ -76,6 +76,7 @@ Insert three **LocalScript**s under `StarterPlayer > StarterPlayerScripts`:
 | `ScoreboardUI` | `src/StarterPlayer/StarterPlayerScripts/ScoreboardUI.client.lua` |
 | `AbilityBar` | `src/StarterPlayer/StarterPlayerScripts/AbilityBar.client.lua` |
 | `ShopUI` | `src/StarterPlayer/StarterPlayerScripts/ShopUI.client.lua` |
+| `ChainTagSettings` | `src/StarterPlayer/StarterPlayerScripts/ChainTagSettings.client.lua` |
 
 ### Step 5 — delete the old stuff
 
@@ -107,9 +108,11 @@ The Output window should show:
 [ChainTag] ScoreboardUI loaded. Hold Tab.
 [ChainTag] AbilityBar loaded. Keys 1 and 2.
 [ChainTag] ShopUI loaded. Press P or click STORE.
+[ChainTag] ChainTagSettings loaded. Press O or click SETTINGS.
 ```
 
-Five from the server, five from the client. **If the client four are
+Five from the server, six from the client. A few seconds later one more line
+appears saying what frame rate it measured and which quality level it chose. **If the client four are
 missing, the LocalScripts are not installed** — and `GameSetup` will name
 each missing one in a warning, including if you added it as the wrong class
 (a Script instead of a LocalScript).
@@ -150,6 +153,7 @@ StarterPlayer
     ScoreboardUI                LocalScript    Tab scoreboard + results
     AbilityBar                  LocalScript    the two ability buttons
     ShopUI                      LocalScript    the store panel
+    ChainTagSettings            LocalScript    settings, and the quality dial
 
 Workspace
   ChainTagMap                   (made at runtime) pickups and the beacon
@@ -346,7 +350,65 @@ the character does not.
 
 ---
 
-## 5. Tuning
+## 5. Performance
+
+Frame rate is a feature. The whole client draws through one quality dial,
+auto-detected on your first join by **measuring actual frame time for four
+seconds** — not by guessing from whether you are on a phone, because plenty
+of phones outrun plenty of laptops. Change it any time in Settings.
+
+| | Low | Medium | High |
+|---|---|---|---|
+| Chain links | 3 | 5 | 7 |
+| Chain draw distance | 90 | 150 | 220 |
+| Aura draw distance | 70 | 130 | 220 |
+| Aura orbs | half | three quarters | all |
+| Pickup burst | off | on | on |
+| Speed streaks | off | on | on |
+| Screen shake | off | on | on |
+| Head titles | off | on | on |
+
+**Quality never touches gameplay.** Low draws a shorter chain; it never gives
+a shorter cooldown, a bigger tag radius or more speed. Nobody can turn the
+settings down for an advantage.
+
+### What the client does each frame
+
+Roblox's own advice is to [audit every RenderStepped connection, because each
+one adds to the frame budget](https://create.roblox.com/docs/performance-optimization).
+So the client work is split by how often it can actually be noticed:
+
+**Ten times a second** — anything that scans every player or walks a
+character's descendants: the vanish fade, deciding who has an aura, trail
+enable/disable, and the nearest-seeker scan behind the danger glow and the
+heartbeat.
+
+**Every frame** — only moving parts that already exist: chain links, aura
+orbs, the crystal spin, and the chain leash. The leash has to be per frame
+because it feeds your walk speed, and at 10 Hz you would feel it stepping.
+
+That is roughly six times less per-frame work than the first version, with no
+visible difference.
+
+### The one thing you have to do yourself
+
+**Turn on StreamingEnabled.** It cannot be set from a script, and for a map
+your size it is [the single biggest performance win available](https://create.roblox.com/docs/performance-optimization):
+
+1. Click **Workspace** in the Explorer
+2. In Properties, tick **StreamingEnabled**
+3. Set **StreamingTargetRadius** to `512`
+
+Without it every player downloads your entire park before they can move.
+`GameSetup` warns you in Output if it is off and your map is large.
+
+Two more that are worth the click:
+
+- `Lighting.Technology` → **ShadowMap** if you are targeting low-end phones.
+- Untick **CastShadow** on small decor. Shadows on 121 flowers cost real
+  frames and nobody has ever noticed them.
+
+## 5b. Tuning
 
 Open `ChainTagConfig`. The ones you will actually reach for:
 
@@ -375,6 +437,11 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 | `Aura.Orbs` | 4 | orbs spinning around somebody with an aura |
 | `Shop.Items` | 10 | the catalogue; add a line to add an item |
 | `Sounds.Cues` | — | pitch and volume per event, with optional per-cue ids |
+| `Quality.Levels` | 3 tiers | what each graphics level draws |
+| `Quality.LowFpsThreshold` | 35 | measured FPS below this picks Low |
+| `Aura.Styles` | 4 shapes | Motes, Ring, DualRing, Halo |
+| `Heartbeat.FastInterval` | 0.32 | beat spacing when a seeker is on top of you |
+| `Music.Tracks` | empty | paste ids you own |
 | `TeleportOnCatch` | true | pull the catcher's whole chain back to Seeker Spawn after a catch |
 | `SaveStats` | true | set false to keep stats to the session |
 
@@ -390,6 +457,13 @@ does the pulling by slowing both ends down as they drift apart (`Chain.SlowStart
 to `Chain.MaxDistance`). Chained players still have to move as a group, but
 nothing can fling anybody, and the server does no chain work at all.
 
+### The settings panel
+
+**O**, or the SETTINGS button on the left edge above STORE. Graphics quality,
+sound effect volume, music volume and screen shake. Settings save with your
+profile, and they are re-validated on the server — a client can ask for any
+setting it likes, and only known keys inside their proper ranges survive.
+
 ### About the sounds
 
 There is one sample in the whole game — `rbxasset://sounds/electronicpingshort.wav`
@@ -400,6 +474,17 @@ the way a private `rbxassetid://` upload does.
 Cues with a `chord` play several pitches in quick succession. That is the
 whole trick behind why a Legendary crystal sounds like an event and a Common
 one sounds like a click — four rising notes versus one.
+
+**The heartbeat** is the one sound allowed to play continuously, because it
+tells you something the HUD cannot: how close the thing behind you is. It
+starts when a seeker is inside about 32 studs and the beat tightens from
+1.15s to 0.32s as they close.
+
+**Music** is a four-state machine — Lobby, Round, Final, Results — that
+crossfades rather than cutting. `Config.Music.Tracks` is empty on purpose:
+with no ids it plays nothing and says nothing about it, which is the right
+behaviour for a game shipped without music. Paste ids you own and it starts
+working with no other change.
 
 `Config.Sounds.Cues` is the full sheet. Each cue takes an optional `soundId`,
 so you can replace them one at a time as you find audio you own, without
@@ -441,6 +526,10 @@ Studio, **Test > Players > 2 Players**:
 - [ ] P opens the store, buying deducts points, and the item equips itself
 - [ ] A bought trail streams behind you when you sprint, and stops when you stop
 - [ ] Buying something does not drop your level
+- [ ] O opens Settings, and switching to Low visibly shortens the chain
+- [ ] Sound effects OFF actually silences everything, including the heartbeat
+- [ ] The heartbeat starts as a seeker closes in and speeds up as they get closer
+- [ ] Each rarity of aura is a different shape, not just a different colour
 
 ---
 

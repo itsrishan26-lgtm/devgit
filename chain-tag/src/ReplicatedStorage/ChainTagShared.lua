@@ -15,6 +15,7 @@
 	HUD stays in sync with zero network chatter.
 --]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -27,7 +28,7 @@ local Config = require(script.Parent:WaitForChild("ChainTagConfig"))
 local REQUIRED_CONFIG = {
 	"Speeds", "Stamina", "Chain", "Colors", "Sounds", "Points",
 	"Map", "Pickups", "Beacon", "Rescue", "Abilities", "Levels", "Combo",
-	"Rarities", "Aura", "Shop",
+	"Rarities", "Aura", "Shop", "Quality", "Heartbeat", "Music",
 }
 
 do
@@ -50,7 +51,7 @@ Shared.Config = Config
 local IS_SERVER = RunService:IsServer()
 
 -- Remote names created under ReplicatedStorage.ChainTagRemotes.
-local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop" }
+local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop", "Settings" }
 
 -- Default values for every replicated state attribute. Listing them here means
 -- the client never reads a nil attribute, so the HUD is correct on frame one.
@@ -155,6 +156,37 @@ function Shared.levelFromPoints(points)
 	return 1 + math.floor(math.sqrt(math.max(0, points or 0) / Config.Levels.PointsPerLevel))
 end
 
+-- Player settings travel as one short string on the Settings attribute, so
+-- they replicate like anything else and save with the rest of the profile.
+--   q     quality level, 0 meaning auto-detect
+--   mus   music volume 0-100
+--   sfx   effect volume 0-100
+--   shake screen shake on or off
+local SETTING_DEFAULTS = { q = 0, mus = 100, sfx = 100, shake = 1 }
+
+function Shared.parseSettings(text)
+	local parsed = table.clone(SETTING_DEFAULTS)
+	for key, value in string.gmatch(tostring(text or ""), "(%a+)=(%d+)") do
+		if parsed[key] ~= nil then
+			parsed[key] = tonumber(value) or parsed[key]
+		end
+	end
+	parsed.q = math.clamp(parsed.q, 0, #Config.Quality.Levels)
+	parsed.mus = math.clamp(parsed.mus, 0, 100)
+	parsed.sfx = math.clamp(parsed.sfx, 0, 100)
+	parsed.shake = math.clamp(parsed.shake, 0, 1)
+	return parsed
+end
+
+function Shared.serializeSettings(parsed)
+	return string.format("q=%d;mus=%d;sfx=%d;shake=%d",
+		parsed.q or 0, parsed.mus or 100, parsed.sfx or 100, parsed.shake or 1)
+end
+
+function Shared.auraStyle(name)
+	return Config.Aura.Styles[name] or Config.Aura.Styles.Ring
+end
+
 function Shared.playerLevel(player)
 	--------------------------------------------------------------------------
 -- Client-only: one place that makes every noise in the game
@@ -162,6 +194,40 @@ function Shared.playerLevel(player)
 
 if not IS_SERVER then
 	local SoundService = game:GetService("SoundService")
+	local localPlayer = Players.LocalPlayer
+
+	-- Parsing a settings string every frame would be exactly the kind of
+	-- waste this pass is meant to remove, so it is cached and thrown away
+	-- only when something actually changes it.
+	local cachedSettings, cachedQuality
+
+	local function invalidate()
+		cachedSettings, cachedQuality = nil, nil
+	end
+
+	localPlayer:GetAttributeChangedSignal("Settings"):Connect(invalidate)
+	localPlayer:GetAttributeChangedSignal("CT_AutoQuality"):Connect(invalidate)
+
+	function Shared.settings()
+		if not cachedSettings then
+			cachedSettings = Shared.parseSettings(localPlayer:GetAttribute("Settings"))
+		end
+		return cachedSettings
+	end
+
+	-- The quality level this client is actually drawing at, resolving 0
+	-- (auto) through whatever the frame-time sample decided.
+	function Shared.quality()
+		if not cachedQuality then
+			local chosen = Shared.settings().q
+			if chosen == 0 then
+				chosen = localPlayer:GetAttribute("CT_AutoQuality") or #Config.Quality.Levels
+			end
+			cachedQuality = Config.Quality.Levels[chosen]
+				or Config.Quality.Levels[#Config.Quality.Levels]
+		end
+		return cachedQuality
+	end
 
 	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
 	-- pitches in quick succession, which is what separates "you picked
@@ -171,13 +237,17 @@ if not IS_SERVER then
 		if not cue or Config.Sounds.Blip == "" then
 			return
 		end
+		local master = Shared.settings().sfx / 100
+		if master <= 0 then
+			return
+		end
 		local pitches = cue.chord or { cue.pitch or 1 }
 		for index, pitch in ipairs(pitches) do
 			task.delay((index - 1) * Config.Sounds.ChordGap, function()
 				local sound = Instance.new("Sound")
 				sound.SoundId = cue.soundId or Config.Sounds.Blip
 				sound.PlaybackSpeed = pitch
-				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1) * master
 				sound.Parent = SoundService
 				SoundService:PlayLocalSound(sound)
 				task.delay(3, function()
@@ -245,6 +315,40 @@ function Shared.owns(player, id)
 
 if not IS_SERVER then
 	local SoundService = game:GetService("SoundService")
+	local localPlayer = Players.LocalPlayer
+
+	-- Parsing a settings string every frame would be exactly the kind of
+	-- waste this pass is meant to remove, so it is cached and thrown away
+	-- only when something actually changes it.
+	local cachedSettings, cachedQuality
+
+	local function invalidate()
+		cachedSettings, cachedQuality = nil, nil
+	end
+
+	localPlayer:GetAttributeChangedSignal("Settings"):Connect(invalidate)
+	localPlayer:GetAttributeChangedSignal("CT_AutoQuality"):Connect(invalidate)
+
+	function Shared.settings()
+		if not cachedSettings then
+			cachedSettings = Shared.parseSettings(localPlayer:GetAttribute("Settings"))
+		end
+		return cachedSettings
+	end
+
+	-- The quality level this client is actually drawing at, resolving 0
+	-- (auto) through whatever the frame-time sample decided.
+	function Shared.quality()
+		if not cachedQuality then
+			local chosen = Shared.settings().q
+			if chosen == 0 then
+				chosen = localPlayer:GetAttribute("CT_AutoQuality") or #Config.Quality.Levels
+			end
+			cachedQuality = Config.Quality.Levels[chosen]
+				or Config.Quality.Levels[#Config.Quality.Levels]
+		end
+		return cachedQuality
+	end
 
 	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
 	-- pitches in quick succession, which is what separates "you picked
@@ -254,13 +358,17 @@ if not IS_SERVER then
 		if not cue or Config.Sounds.Blip == "" then
 			return
 		end
+		local master = Shared.settings().sfx / 100
+		if master <= 0 then
+			return
+		end
 		local pitches = cue.chord or { cue.pitch or 1 }
 		for index, pitch in ipairs(pitches) do
 			task.delay((index - 1) * Config.Sounds.ChordGap, function()
 				local sound = Instance.new("Sound")
 				sound.SoundId = cue.soundId or Config.Sounds.Blip
 				sound.PlaybackSpeed = pitch
-				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1) * master
 				sound.Parent = SoundService
 				SoundService:PlayLocalSound(sound)
 				task.delay(3, function()
@@ -281,6 +389,40 @@ function Shared.equipped(player, kind)
 
 if not IS_SERVER then
 	local SoundService = game:GetService("SoundService")
+	local localPlayer = Players.LocalPlayer
+
+	-- Parsing a settings string every frame would be exactly the kind of
+	-- waste this pass is meant to remove, so it is cached and thrown away
+	-- only when something actually changes it.
+	local cachedSettings, cachedQuality
+
+	local function invalidate()
+		cachedSettings, cachedQuality = nil, nil
+	end
+
+	localPlayer:GetAttributeChangedSignal("Settings"):Connect(invalidate)
+	localPlayer:GetAttributeChangedSignal("CT_AutoQuality"):Connect(invalidate)
+
+	function Shared.settings()
+		if not cachedSettings then
+			cachedSettings = Shared.parseSettings(localPlayer:GetAttribute("Settings"))
+		end
+		return cachedSettings
+	end
+
+	-- The quality level this client is actually drawing at, resolving 0
+	-- (auto) through whatever the frame-time sample decided.
+	function Shared.quality()
+		if not cachedQuality then
+			local chosen = Shared.settings().q
+			if chosen == 0 then
+				chosen = localPlayer:GetAttribute("CT_AutoQuality") or #Config.Quality.Levels
+			end
+			cachedQuality = Config.Quality.Levels[chosen]
+				or Config.Quality.Levels[#Config.Quality.Levels]
+		end
+		return cachedQuality
+	end
 
 	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
 	-- pitches in quick succession, which is what separates "you picked
@@ -290,13 +432,17 @@ if not IS_SERVER then
 		if not cue or Config.Sounds.Blip == "" then
 			return
 		end
+		local master = Shared.settings().sfx / 100
+		if master <= 0 then
+			return
+		end
 		local pitches = cue.chord or { cue.pitch or 1 }
 		for index, pitch in ipairs(pitches) do
 			task.delay((index - 1) * Config.Sounds.ChordGap, function()
 				local sound = Instance.new("Sound")
 				sound.SoundId = cue.soundId or Config.Sounds.Blip
 				sound.PlaybackSpeed = pitch
-				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1) * master
 				sound.Parent = SoundService
 				SoundService:PlayLocalSound(sound)
 				task.delay(3, function()
@@ -512,6 +658,40 @@ end
 
 if not IS_SERVER then
 	local SoundService = game:GetService("SoundService")
+	local localPlayer = Players.LocalPlayer
+
+	-- Parsing a settings string every frame would be exactly the kind of
+	-- waste this pass is meant to remove, so it is cached and thrown away
+	-- only when something actually changes it.
+	local cachedSettings, cachedQuality
+
+	local function invalidate()
+		cachedSettings, cachedQuality = nil, nil
+	end
+
+	localPlayer:GetAttributeChangedSignal("Settings"):Connect(invalidate)
+	localPlayer:GetAttributeChangedSignal("CT_AutoQuality"):Connect(invalidate)
+
+	function Shared.settings()
+		if not cachedSettings then
+			cachedSettings = Shared.parseSettings(localPlayer:GetAttribute("Settings"))
+		end
+		return cachedSettings
+	end
+
+	-- The quality level this client is actually drawing at, resolving 0
+	-- (auto) through whatever the frame-time sample decided.
+	function Shared.quality()
+		if not cachedQuality then
+			local chosen = Shared.settings().q
+			if chosen == 0 then
+				chosen = localPlayer:GetAttribute("CT_AutoQuality") or #Config.Quality.Levels
+			end
+			cachedQuality = Config.Quality.Levels[chosen]
+				or Config.Quality.Levels[#Config.Quality.Levels]
+		end
+		return cachedQuality
+	end
 
 	-- Plays a cue from Config.Sounds.Cues. A cue with `chord` plays its
 	-- pitches in quick succession, which is what separates "you picked
@@ -521,13 +701,17 @@ if not IS_SERVER then
 		if not cue or Config.Sounds.Blip == "" then
 			return
 		end
+		local master = Shared.settings().sfx / 100
+		if master <= 0 then
+			return
+		end
 		local pitches = cue.chord or { cue.pitch or 1 }
 		for index, pitch in ipairs(pitches) do
 			task.delay((index - 1) * Config.Sounds.ChordGap, function()
 				local sound = Instance.new("Sound")
 				sound.SoundId = cue.soundId or Config.Sounds.Blip
 				sound.PlaybackSpeed = pitch
-				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1)
+				sound.Volume = (cue.volume or 0.3) * (volumeScale or 1) * master
 				sound.Parent = SoundService
 				SoundService:PlayLocalSound(sound)
 				task.delay(3, function()

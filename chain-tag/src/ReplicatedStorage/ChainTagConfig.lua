@@ -140,33 +140,36 @@ Config.Rarities = {
 		name = "Common", weight = 62, color = Color3.fromRGB(120, 255, 190),
 		size = 1.7, light = 12, spin = 1.6,
 		stamina = 40, speed = 4, duration = 4, points = 0,
-		announce = false, cue = "PickupCommon",
+		announce = false, cue = "PickupCommon", aura = "Motes",
 	},
 	{
 		name = "Rare", weight = 26, color = Color3.fromRGB(88, 170, 255),
 		size = 2.0, light = 17, spin = 2.1,
 		stamina = 70, speed = 6, duration = 5, points = 5,
-		announce = false, cue = "PickupRare",
+		announce = false, cue = "PickupRare", aura = "Ring",
 	},
 	{
 		name = "Epic", weight = 9, color = Color3.fromRGB(190, 120, 255),
 		size = 2.4, light = 23, spin = 2.8,
 		stamina = 100, speed = 8, duration = 6, points = 15,
-		announce = false, cue = "PickupEpic",
+		announce = false, cue = "PickupEpic", aura = "DualRing",
 	},
 	{
 		name = "Legendary", weight = 3, color = Color3.fromRGB(255, 200, 80),
 		size = 2.9, light = 32, spin = 3.6,
 		stamina = 140, speed = 11, duration = 8, points = 40,
-		announce = true, cue = "PickupLegendary",
+		announce = true, cue = "PickupLegendary", aura = "Halo",
 	},
 }
 
--- The ring of orbs that spins around you after a pickup, and the burst the
--- crystal leaves behind. Both are built out of plain parts on each client,
--- so there is no texture to load and nothing to replicate.
+-- Auras and the burst a crystal leaves behind, both built from plain parts
+-- on each client: no texture to load and nothing replicated.
+--
+-- A rarer aura is a DIFFERENT SHAPE, not more parts. Legendary uses eleven
+-- orbs to Epic's six because the design needs them, not to look expensive.
+-- "More particles" is how a game ends up looking cheap and running badly at
+-- the same time.
 Config.Aura = {
-	Orbs = 4,
 	Radius = 2.6,
 	Height = 0.1,
 	OrbSize = 0.45,
@@ -174,6 +177,86 @@ Config.Aura = {
 	BurstShards = 8,
 	BurstTime = 0.45,
 	BurstSpread = 7,
+
+	Styles = {
+		-- Slow motes drifting around you at different heights.
+		Motes =    { orbs = 3, size = 0.85, spin = 0.7, drift = 1.1, rings = 1 },
+		-- One clean orbiting ring.
+		Ring =     { orbs = 4, size = 1.0,  spin = 2.4, drift = 0.25, rings = 1 },
+		-- Two rings turning against each other at different heights.
+		DualRing = { orbs = 6, size = 0.9,  spin = 2.9, drift = 0.15, rings = 2 },
+		-- A wide slow halo with a single pulsing core above the head.
+		Halo =     { orbs = 8, size = 0.75, spin = 1.1, drift = 0.1, rings = 1,
+			radius = 3.4, height = 3.1, core = true },
+	},
+}
+
+--------------------------------------------------------------------------
+-- QUALITY
+-- One dial that scales everything a client draws. Auto-detected on the
+-- first join by measuring actual frame time, and changeable any time in
+-- Settings. Nothing here touches gameplay - a player on Low sees a shorter
+-- chain, never a shorter cooldown.
+--------------------------------------------------------------------------
+
+Config.Quality = {
+	AutoDetectSeconds = 4,    -- how long to sample frame time before deciding
+	LowFpsThreshold = 35,     -- below this, drop to Low
+	MediumFpsThreshold = 52,  -- below this, drop to Medium
+
+	Levels = {
+		{
+			name = "Low",
+			chainLinks = 3, chainDistance = 90,
+			auraDistance = 70, auraScale = 0.5,
+			burst = false, streaks = false, shake = false, titles = false,
+		},
+		{
+			name = "Medium",
+			chainLinks = 5, chainDistance = 150,
+			auraDistance = 130, auraScale = 0.75,
+			burst = true, streaks = true, shake = true, titles = true,
+		},
+		{
+			name = "High",
+			chainLinks = 7, chainDistance = 220,
+			auraDistance = 220, auraScale = 1,
+			burst = true, streaks = true, shake = true, titles = true,
+		},
+	},
+}
+
+--------------------------------------------------------------------------
+-- HEARTBEAT
+-- The beat quickens as a seeker closes on you. It is the one piece of audio
+-- that tells you something the HUD cannot, so it is deliberately the only
+-- sound allowed to play continuously.
+--------------------------------------------------------------------------
+
+Config.Heartbeat = {
+	Enabled = true,
+	StartAt = 0.3,        -- danger level where it starts (0..1)
+	SlowInterval = 1.15,  -- seconds between beats when it starts
+	FastInterval = 0.32,  -- seconds between beats at point blank
+}
+
+--------------------------------------------------------------------------
+-- MUSIC
+-- Empty on purpose. Paste only ids you own or know are free to use - a bad
+-- id means a red error for every player and silence for the whole round.
+-- The state machine crossfades, so tracks never cut off abruptly.
+--------------------------------------------------------------------------
+
+Config.Music = {
+	Enabled = true,
+	Volume = 0.16,
+	FadeTime = 1.6,
+	Tracks = {
+		Lobby = "",     -- Waiting and Intermission
+		Round = "",     -- the hunt
+		Final = "",     -- the last EndgameRevealAt seconds
+		Results = "",   -- the win banner
+	},
 }
 
 -- A marked circle that moves around the map. Runners earn points every
@@ -301,6 +384,7 @@ Config.Sounds = {
 	-- click. Swap in your own SoundId per cue once you own one.
 	Cues = {
 		Click =           { pitch = 1.20, volume = 0.22 },
+		Heartbeat =       { pitch = 0.34, volume = 0.30 },
 		Deny =            { pitch = 0.50, volume = 0.20 },
 		AbilityUse =      { pitch = 1.60, volume = 0.30 },
 		AbilityReady =    { pitch = 1.35, volume = 0.26 },
@@ -344,8 +428,9 @@ Config.Shop = {
 		{ id = "trail_violet", kind = "Trail", name = "Violet Trail", price = 220, color = Color3.fromRGB(190, 120, 255) },
 
 		-- Auras orbit you all round long.
-		{ id = "aura_sky",     kind = "Aura",  name = "Sky Aura",     price = 180, color = Color3.fromRGB(88, 170, 255) },
-		{ id = "aura_gold",    kind = "Aura",  name = "Gold Aura",    price = 450, color = Color3.fromRGB(255, 200, 80) },
+		{ id = "aura_sky",   kind = "Aura", name = "Sky Aura",   price = 180, color = Color3.fromRGB(88, 170, 255), style = "Ring" },
+		{ id = "aura_dusk",  kind = "Aura", name = "Dusk Aura",  price = 320, color = Color3.fromRGB(190, 120, 255), style = "DualRing" },
+		{ id = "aura_gold",  kind = "Aura", name = "Gold Halo",  price = 450, color = Color3.fromRGB(255, 200, 80), style = "Halo" },
 
 		-- Chain colours apply to the chain you are dragging.
 		{ id = "chain_bronze", kind = "Chain", name = "Bronze Chain", price = 140, color = Color3.fromRGB(196, 132, 74) },
