@@ -160,6 +160,54 @@ Config.Rescue = {
 }
 
 --------------------------------------------------------------------------
+-- POWERUPS
+-- Everybody gets Dash. The second slot swaps with your role: seekers get a
+-- radar sweep, runners get a vanish. Cooldowns are counted on the server -
+-- the buttons on your screen only draw what the server already decided.
+--------------------------------------------------------------------------
+
+Config.Abilities = {
+	Enabled = true,
+
+	Dash = {
+		Cooldown = 9,
+		Power = 62,      -- forward shove, in studs per second
+		Lift = 9,        -- small hop so it clears kerbs instead of stubbing
+	},
+
+	-- Seekers only: every runner lights up through walls for a moment.
+	Radar = {
+		Cooldown = 24,
+		Duration = 4,
+	},
+
+	-- Runners only: you fade out for everyone else. It breaks the chase
+	-- rather than making you safe - you can still be tagged while faded.
+	Vanish = {
+		Cooldown = 26,
+		Duration = 4,
+		Transparency = 0.85,
+	},
+}
+
+-- Catch two or more runners inside this many seconds and the whole server
+-- hears about it. Streaks are what make a good seeker feel like one.
+Config.Combo = {
+	Window = 20,
+}
+
+--------------------------------------------------------------------------
+-- LEVELS
+-- Levels come from total points earned, so they carry across rounds and
+-- give people a reason to come back. Level 2 at 40 points, 3 at 160,
+-- 4 at 360: level = 1 + floor(sqrt(points / PointsPerLevel))
+--------------------------------------------------------------------------
+
+Config.Levels = {
+	PointsPerLevel = 40,
+}
+
+--------------------------------------------------------------------------
 -- SCORING  (Points and Catches show on the player list)
 --------------------------------------------------------------------------
 

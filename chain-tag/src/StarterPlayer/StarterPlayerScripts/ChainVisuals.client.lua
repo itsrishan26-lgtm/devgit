@@ -132,6 +132,7 @@ end
 --------------------------------------------------------------------------
 
 local highlights = {}   -- [player] = Highlight
+local faded = {}        -- [player] = true while Vanish is fading them for us
 
 local function setHighlight(target, color, alwaysOnTop)
 	local highlight = highlights[target]
@@ -203,6 +204,9 @@ local function rebuildRelationships()
 	local reveal = State:GetAttribute("EndgameReveal") == true
 	local lastRunnerId = State:GetAttribute("LastRunnerUserId") or 0
 	local localIsSeeker = Shared.isSeeker(player)
+	-- Radar is our own ability, so it only ever lights runners up for us.
+	local radar = localIsSeeker
+		and (player:GetAttribute("RadarUntil") or 0) > workspace:GetServerTimeNow()
 
 	table.clear(pairsList)
 	table.clear(chainNeighbours)
@@ -228,6 +232,10 @@ local function rebuildRelationships()
 		-- Outlines
 		if not hunting or not inRound or not other.Character then
 			clearHighlight(other)
+		elseif (other:GetAttribute("VanishUntil") or 0) > workspace:GetServerTimeNow() then
+			-- Faded out. This is what makes Vanish the answer to Radar: a
+			-- runner who timed it right is not on the sweep.
+			clearHighlight(other)
 		elseif other:GetAttribute("Immune") == true then
 			-- Just broken out of the chain and briefly untouchable.
 			setHighlight(other, Config.Colors.Good, true)
@@ -236,7 +244,7 @@ local function rebuildRelationships()
 		elseif lastRunnerId == other.UserId and Config.LastRunnerBeacon then
 			setHighlight(other, Config.Colors.Warn, true)
 			beaconTarget = other
-		elseif reveal and localIsSeeker then
+		elseif (reveal or radar) and localIsSeeker then
 			setHighlight(other, Config.Colors.Runner, true)
 		else
 			clearHighlight(other)
@@ -258,6 +266,7 @@ end
 Players.PlayerRemoving:Connect(function(leaving)
 	dropLinkSet(leaving)
 	clearHighlight(leaving)
+	faded[leaving] = nil
 end)
 
 --------------------------------------------------------------------------
@@ -280,6 +289,51 @@ task.spawn(function()
 		task.wait(0.25)
 	end
 end)
+
+--------------------------------------------------------------------------
+-- Vanish
+-- LocalTransparencyModifier only affects what this client draws, so fading
+-- somebody out here changes nothing about where they actually are - they
+-- can still be tagged while faded. Original transparencies are remembered
+-- so a fade can be undone exactly, including on the face decal.
+--------------------------------------------------------------------------
+
+local originalCover = setmetatable({}, { __mode = "k" })   -- [decal] = transparency
+
+local function setFade(character, amount)
+	if not character then
+		return
+	end
+	for _, item in ipairs(character:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.LocalTransparencyModifier = amount
+		elseif item:IsA("Decal") or item:IsA("Texture") then
+			if originalCover[item] == nil then
+				originalCover[item] = item.Transparency
+			end
+			item.Transparency = amount > 0 and 1 or originalCover[item]
+		end
+	end
+end
+
+local function updateVanish()
+	local now = workspace:GetServerTimeNow()
+	for _, other in ipairs(Players:GetPlayers()) do
+		-- Never fade yourself out: you would lose track of your own
+		-- character. The HUD tells you instead.
+		local hide = other ~= player
+			and (other:GetAttribute("VanishUntil") or 0) > now
+			and other.Character ~= nil
+
+		if hide then
+			setFade(other.Character, Config.Abilities.Vanish.Transparency)
+			faded[other] = true
+		elseif faded[other] then
+			setFade(other.Character, 0)
+			faded[other] = nil
+		end
+	end
+end
 
 --------------------------------------------------------------------------
 -- Per frame work
@@ -314,6 +368,8 @@ RunService.RenderStepped:Connect(function()
 	for _, part in ipairs(beaconParts) do
 		part.Transparency = 0.55 + math.sin(clock * 2.4) * 0.12
 	end
+
+	updateVanish()
 
 	local cameraPosition = camera.CFrame.Position
 	local renderDistanceSquared = ChainConfig.RenderDistance * ChainConfig.RenderDistance

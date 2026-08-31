@@ -93,7 +93,7 @@ local function validateSetup()
 		if scripts:FindFirstChild("CatchCountdownUI") then
 			warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
 		end
-		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI" }) do
+		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI", "AbilityBar" }) do
 			local found = scripts:FindFirstChild(name)
 			if not found then
 				warn(string.format("[ChainTag] StarterPlayerScripts.%s is missing - add it as a LocalScript " ..
@@ -224,7 +224,12 @@ local function loadStats(player)
 		end
 		-- "Studio access to APIs is not allowed" is a setting, not a hiccup.
 		-- Retrying it just fills the Output window with red.
-		if string.find(tostring(data), "StudioAccessToApis") then
+		-- Roblox words this two different ways depending on where it is
+		-- raised, so match both rather than only the enum-looking one.
+		local reason = tostring(data)
+		if string.find(reason, "StudioAccessToApis")
+			or string.find(reason, "Studio access to APIs")
+		then
 			statsWorking = false
 			warn("[ChainTag] Stats will not save in Studio until you tick " ..
 				"File > Game Settings > Security > Enable Studio Access to API Services. " ..

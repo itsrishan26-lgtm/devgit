@@ -191,7 +191,7 @@ local function buildRow(target, index)
 		Size = UDim2.fromOffset(58, 26),
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamMedium,
-		Text = roleText,
+		Text = string.format("%s   LV %d", roleText, Shared.levelFromPoints(statOf(target, "Points"))),
 		TextColor3 = roleColor,
 		TextSize = 10,
 		TextXAlignment = Enum.TextXAlignment.Left,

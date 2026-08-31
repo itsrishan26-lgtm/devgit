@@ -59,6 +59,7 @@ Insert two **Script**s (the plain kind, not LocalScript) under
 | `GameSetup` | `src/ServerScriptService/GameSetup.server.lua` |
 | `CatchDetection` | `src/ServerScriptService/CatchDetection.server.lua` |
 | `MapEvents` | `src/ServerScriptService/MapEvents.server.lua` |
+| `Powerups` | `src/ServerScriptService/Powerups.server.lua` |
 
 If you already have scripts with these names, paste over them completely.
 
@@ -72,6 +73,7 @@ Insert three **LocalScript**s under `StarterPlayer > StarterPlayerScripts`:
 | `ChainTagUI` | `src/StarterPlayer/StarterPlayerScripts/ChainTagUI.client.lua` |
 | `ChainVisuals` | `src/StarterPlayer/StarterPlayerScripts/ChainVisuals.client.lua` |
 | `ScoreboardUI` | `src/StarterPlayer/StarterPlayerScripts/ScoreboardUI.client.lua` |
+| `AbilityBar` | `src/StarterPlayer/StarterPlayerScripts/AbilityBar.client.lua` |
 
 ### Step 5 — delete the old stuff
 
@@ -96,12 +98,14 @@ The Output window should show:
 [ChainTag] GameSetup running. Round length 120s, 2 player(s) needed.
 [ChainTag] CatchDetection running. Tag range 6 studs.
 [ChainTag] MapEvents running. Pickups: true, beacon: true, rescue: true
+[ChainTag] Powerups running. Dash 9s, Radar 24s, Vanish 26s.
 [ChainTag] ChainTagUI loaded and listening.
 [ChainTag] ChainVisuals loaded. Chain mode: Leash
 [ChainTag] ScoreboardUI loaded. Hold Tab.
+[ChainTag] AbilityBar loaded. Keys 1 and 2.
 ```
 
-Only the first three lines come from the server. **If the last three are
+Four from the server, four from the client. **If the client four are
 missing, the LocalScripts are not installed** — and `GameSetup` will name
 each missing one in a warning, including if you added it as the wrong class
 (a Script instead of a LocalScript).
@@ -131,6 +135,7 @@ ServerScriptService
   GameSetup                     Script         round loop, roles, scoring
   CatchDetection                Script         tagging
   MapEvents                     Script         pickups, beacon, rescue
+  Powerups                      Script         abilities and their cooldowns
 
 StarterPlayer
   StarterPlayerScripts
@@ -138,6 +143,7 @@ StarterPlayer
     ChainTagUI                  LocalScript    the whole HUD
     ChainVisuals                LocalScript    chain, outlines, leash
     ScoreboardUI                LocalScript    Tab scoreboard + results
+    AbilityBar                  LocalScript    the two ability buttons
 
 Workspace
   ChainTagMap                   (made at runtime) pickups and the beacon
@@ -200,6 +206,26 @@ forever.
 This is the biggest change to how the game plays. If you want it off, set
 `Config.Rescue.Enabled = false` and everything else carries on working.
 
+### Powerups
+
+Two slots, bottom of the screen. Press **1** and **2**, or tap them on a phone.
+Slot 2 relabels itself when your role changes, so you are never shown a button
+you are not allowed to press.
+
+| Slot | Who | What it does | Cooldown |
+|---|---|---|---|
+| **DASH** | everyone | A hard shove in the direction you are moving. Breaks a tackle, or closes one. | 9s |
+| **RADAR** | seekers | Every runner lights up through walls for 4 seconds. | 24s |
+| **VANISH** | runners | You fade out on everyone else's screen for 4 seconds. | 26s |
+
+Vanish is deliberately the answer to Radar: a runner who fades at the right
+moment is not on the sweep. And Vanish does not make you safe — you can still
+be tagged while faded, it just breaks the chase.
+
+Cooldowns are counted **on the server**, which is the only place they can be
+counted safely. The buttons on screen just draw what the server already
+decided, so a player editing their own client cannot shorten one.
+
 **Anti-camping:** with 30 seconds left, every remaining runner is outlined
 through walls for the seeker team. When one runner is left, everybody sees a
 `LAST RUNNER` marker over them. Hiding in a bush until the timer runs out does
@@ -228,6 +254,10 @@ the startup check that warns you about a broken setup.
 **`CatchDetection`** (Script) — checks seeker-to-runner distance ten times a
 second, confirms with one raycast, and runs the catch sequence.
 
+**`Powerups`** (Script) — the three abilities and, more importantly, their
+cooldowns. Nothing else on the server or the client is allowed to decide
+whether an ability fires.
+
 **`MapEvents`** (Script) — the pickups, the beacon and the rescue mechanic.
 Deliberately separate: if you delete this script the game still runs a
 perfectly good round without it.
@@ -244,8 +274,13 @@ grows as a seeker closes in on you.
 reveals runners in the endgame, marks the last runner, spins the pickups and
 pulses the beacon, and works out how much the chain slows you down.
 
-**`ScoreboardUI`** (LocalScript) — hold Tab for role, catches, prison breaks
-and points. Opens on its own when a round ends.
+**`ScoreboardUI`** (LocalScript) — hold Tab for role, level, catches, prison
+breaks and points. Opens on its own when a round ends.
+
+**`AbilityBar`** (LocalScript) — the two ability buttons, their cooldown
+sweeps and the countdown numbers. It also applies the dash shove, because a
+shove pushed from the server stutters and one applied by the client that owns
+the character does not.
 
 ### How the scripts talk to each other
 
@@ -286,6 +321,11 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 | `Beacon.MoveEvery` | 35 | seconds before the beacon jumps somewhere new |
 | `Rescue.Enabled` | true | prison breaks; false removes the mechanic entirely |
 | `Rescue.HoldTime` | 4 | seconds you have to hold to free someone |
+| `Abilities.Enabled` | true | false hides the ability bar and refuses every use |
+| `Abilities.Dash.Cooldown` | 9 | seconds between dashes |
+| `Abilities.Dash.Power` | 62 | how hard the dash shoves |
+| `Levels.PointsPerLevel` | 40 | level 2 at 40 points, 3 at 160, 4 at 360 |
+| `Combo.Window` | 20 | seconds to keep a catch streak alive |
 | `TeleportOnCatch` | true | pull the catcher's whole chain back to Seeker Spawn after a catch |
 | `SaveStats` | true | set false to keep stats to the session |
 
@@ -335,6 +375,11 @@ Studio, **Test > Players > 2 Players**:
 - [ ] A beacon appears 15s in, the HUD needle points at it, and standing in it earns points
 - [ ] Standing next to a chained player fills the FREEING bar and cuts them loose
 - [ ] Tab opens the scoreboard, and it opens by itself when the round ends
+- [ ] Keys 1 and 2 fire abilities, and slot 2 says RADAR as a seeker, VANISH as a runner
+- [ ] A used ability greys out, counts down, then flashes and chirps when it is ready
+- [ ] Radar lights the runners up; a runner who vanishes at the right time is not lit
+- [ ] Earning points floats a +N up the right of the screen
+- [ ] The round starts with 3-2-1-GO and getting tagged shakes the screen
 
 ---
 

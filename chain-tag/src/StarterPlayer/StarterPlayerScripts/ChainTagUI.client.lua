@@ -265,12 +265,13 @@ local countdownCaption = create("TextLabel", {
 
 -- Toast feed --------------------------------------------------------------
 
--- Top left, not bottom left: the bottom corners belong to the mobile
--- thumbstick and jump button.
+-- Left edge, vertically centred. The top left is the Roblox chat window and
+-- the bottom corners are the mobile thumbstick and jump button, so the
+-- middle of the left edge is the only part of that side actually free.
 local toastHolder = create("Frame", {
 	Name = "Feed",
-	AnchorPoint = Vector2.new(0, 0),
-	Position = UDim2.new(0, 14, 0, 100),
+	AnchorPoint = Vector2.new(0, 0.5),
+	Position = UDim2.new(0, 14, 0.5, 0),
 	Size = UDim2.fromOffset(320, 130),
 	BackgroundTransparency = 1,
 	Parent = gui,
@@ -430,20 +431,159 @@ corner(3, rescueFill)
 
 -- Immunity pill -----------------------------------------------------------
 
-local immuneLabel = create("TextLabel", {
-	Name = "Immune",
+local statusLabel = create("TextLabel", {
+	Name = "Status",
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 140),
 	Size = UDim2.fromOffset(180, 18),
 	BackgroundTransparency = 1,
 	Font = Enum.Font.GothamBold,
-	Text = "UNTOUCHABLE",
+	Text = "",
 	TextColor3 = Config.Colors.Good,
 	TextSize = 14,
 	TextStrokeTransparency = 0.55,
 	Visible = false,
 	Parent = gui,
 })
+
+-- Screen flash ------------------------------------------------------------
+
+local flash = create("Frame", {
+	Name = "Flash",
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	ZIndex = 30,
+	Parent = gui,
+})
+
+-- Speed streaks -----------------------------------------------------------
+-- Two soft gradients that bleed in from the sides while you sprint. Cheap,
+-- needs no image, and gives running an actual sense of speed.
+
+local streaks = {}
+for _, side in ipairs({ { anchor = Vector2.new(0, 0.5), pos = UDim2.fromScale(0, 0.5), rotation = 180 },
+	{ anchor = Vector2.new(1, 0.5), pos = UDim2.fromScale(1, 0.5), rotation = 0 } }) do
+	local streak = create("Frame", {
+		AnchorPoint = side.anchor,
+		Position = side.pos,
+		Size = UDim2.new(0, 200, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 2,
+		Parent = gui,
+	})
+	create("UIGradient", {
+		Rotation = side.rotation,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+		Parent = streak,
+	})
+	table.insert(streaks, streak)
+end
+
+-- Round-start countdown ---------------------------------------------------
+
+local introLabel = create("TextLabel", {
+	Name = "Intro",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.44),
+	Size = UDim2.new(0.5, 0, 0, 120),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBlack,
+	Text = "",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextScaled = true,
+	TextStrokeTransparency = 0.4,
+	Visible = false,
+	ZIndex = 15,
+	Parent = gui,
+})
+local introScale = create("UIScale", { Parent = introLabel })
+
+-- Points popups -----------------------------------------------------------
+
+local popupHolder = create("Frame", {
+	Name = "Popups",
+	AnchorPoint = Vector2.new(1, 0.5),
+	Position = UDim2.new(1, -28, 0.5, 0),
+	Size = UDim2.fromOffset(150, 220),
+	BackgroundTransparency = 1,
+	Parent = gui,
+})
+local popupIndex = 0
+
+local function showPopup(text)
+	popupIndex += 1
+	local startY = (popupIndex % 4) * 26
+	local label = create("TextLabel", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, 0, 0.5, startY),
+		Size = UDim2.fromOffset(150, 30),
+		BackgroundTransparency = 1,
+		Font = Enum.Font.GothamBlack,
+		Text = text,
+		TextColor3 = Config.Beacon.Color,
+		TextSize = 24,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		TextStrokeTransparency = 0.4,
+		Parent = popupHolder,
+	})
+	local scale = create("UIScale", { Scale = 0.6, Parent = label })
+	tween(scale, 0.2, { Scale = 1 }, Enum.EasingStyle.Back)
+	tween(label, 0.9, {
+		Position = UDim2.new(1, 0, 0.5, startY - 70),
+		TextTransparency = 1,
+		TextStrokeTransparency = 1,
+	})
+	task.delay(1, function()
+		label:Destroy()
+	end)
+end
+
+-- Effects -----------------------------------------------------------------
+
+local function screenFlash(color, strength)
+	flash.BackgroundColor3 = color
+	flash.BackgroundTransparency = 1 - strength
+	tween(flash, 0.5, { BackgroundTransparency = 1 })
+end
+
+-- Bound after the camera has already been positioned for this frame, so the
+-- shake is applied on top of whatever the normal camera did rather than
+-- fighting it.
+local shakeUntil, shakeStrength = 0, 0
+
+local function addShake(strength, duration)
+	shakeStrength = math.max(shakeStrength, strength)
+	shakeUntil = math.max(shakeUntil, os.clock() + duration)
+end
+
+RunService:BindToRenderStep("ChainTagShake", Enum.RenderPriority.Camera.Value + 1, function()
+	local camera = workspace.CurrentCamera
+	if not camera or os.clock() >= shakeUntil then
+		shakeStrength = 0
+		return
+	end
+	local amount = shakeStrength * math.min(1, shakeUntil - os.clock())
+	camera.CFrame = camera.CFrame
+		* CFrame.new((math.random() - 0.5) * amount, (math.random() - 0.5) * amount, 0)
+end)
+
+local function showIntro(text, color)
+	introLabel.Visible = true
+	introLabel.Text = text
+	introLabel.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+	introLabel.TextTransparency = 0
+	introLabel.TextStrokeTransparency = 0.4
+	introScale.Scale = 1.7
+	tween(introScale, 0.45, { Scale = 1 }, Enum.EasingStyle.Back)
+	tween(introLabel, 0.75, { TextTransparency = 1, TextStrokeTransparency = 1 })
+end
 
 -- Chain taut warning ------------------------------------------------------
 
@@ -653,6 +793,11 @@ local function onPhaseChanged()
 	end
 	lastPhase = phase
 
+	if phase == "Round" then
+		showIntro("GO!", Config.Colors.Good)
+		playBlip(1.6, Config.Sounds.UiVolume)
+	end
+
 	if phase == "Starting" then
 		if State:GetAttribute("SoloPractice") then
 			showBanner("PRACTICE ROUND", "No seeker until a second player joins",
@@ -717,6 +862,11 @@ Remotes.CatchCountdown.OnClientEvent:Connect(function(catcherName, caughtName, s
 	countdownCaption.Text = string.format("%s chained %s", tostring(catcherName), tostring(caughtName))
 	countdownCaption.TextColor3 = involved and Config.Colors.Seeker or Color3.fromRGB(255, 255, 255)
 
+	if involved then
+		screenFlash(Config.Colors.Seeker, 0.35)
+		addShake(0.55, 0.45)
+	end
+
 	for count = math.floor(seconds or Config.CatchCountdown), 1, -1 do
 		if token ~= countdownToken then
 			return
@@ -736,6 +886,26 @@ Remotes.CatchCountdown.OnClientEvent:Connect(function(catcherName, caughtName, s
 end)
 
 Remotes.Toast.OnClientEvent:Connect(pushToast)
+Remotes.Popup.OnClientEvent:Connect(showPopup)
+
+-- Levels come from total points, so the moment to celebrate one is when the
+-- points value itself changes.
+task.spawn(function()
+	local stats = player:WaitForChild("leaderstats", 30)
+	local points = stats and stats:WaitForChild("Points", 10)
+	if not points then
+		return
+	end
+	local level = Shared.levelFromPoints(points.Value)
+	points.Changed:Connect(function(value)
+		local reached = Shared.levelFromPoints(value)
+		if reached > level then
+			level = reached
+			showBanner("LEVEL " .. reached, "Keep it up", Config.Colors.Good, 2.5)
+			playBlip(1.7, Config.Sounds.UiVolume)
+		end
+	end)
+end)
 
 --------------------------------------------------------------------------
 -- Per frame: clock, vignette, taut warning
@@ -864,7 +1034,26 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		tautLabel.TextTransparency = 0.25 + 0.25 * math.sin(os.clock() * 8)
 	end
 
-	immuneLabel.Visible = player:GetAttribute("Immune") == true
+	-- One pill, whichever of the two is currently true.
+	local now = workspace:GetServerTimeNow()
+	if player:GetAttribute("Immune") == true then
+		statusLabel.Text = "UNTOUCHABLE"
+		statusLabel.TextColor3 = Config.Colors.Good
+		statusLabel.Visible = true
+	elseif (player:GetAttribute("VanishUntil") or 0) > now then
+		statusLabel.Text = "VANISHED"
+		statusLabel.TextColor3 = Config.Colors.Runner
+		statusLabel.Visible = true
+	else
+		statusLabel.Visible = false
+	end
+
+	-- Speed streaks follow the sprint flag the Sprint script publishes.
+	local sprinting = player:GetAttribute("CT_Sprinting") == true
+	for _, streak in ipairs(streaks) do
+		local goal = sprinting and 0.82 or 1
+		streak.BackgroundTransparency += (goal - streak.BackgroundTransparency) * math.min(1, deltaTime * 7)
+	end
 
 	updateBeaconMarker(phase)
 	updateRescueBar()
@@ -880,6 +1069,7 @@ task.spawn(function()
 			if left <= 3 and left >= 1 and left ~= beepedAt then
 				beepedAt = left
 				playBlip(0.9 + (3 - left) * 0.2, Config.Sounds.UiVolume)
+				showIntro(tostring(left))
 			end
 		else
 			beepedAt = -1

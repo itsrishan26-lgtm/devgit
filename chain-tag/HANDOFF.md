@@ -30,6 +30,11 @@ tagging or marking:
 * **Beacon** - a marked circle that moves every 35s and pays runners a point a
   second for standing in it. Pulls people out of the corners and tells seekers
   where to look. The HUD carries a needle pointing at it.
+* **Powerups** - Dash for everyone, Radar for seekers, Vanish for runners, on
+  slots 1 and 2. Cooldowns are counted on the server and written to
+  `AbilityReady_<Name>` attributes; the bar only draws them. The dash impulse
+  itself is applied by the owning client, since a shove pushed from the server
+  stutters. Vanish is the counter to Radar by design.
 * **Prison breaks** - hold your ground next to the end of a chain for four
   seconds to free that player. They get three seconds of immunity. Only chain
   ends, once per player per round, and locked out during the endgame reveal.
@@ -65,12 +70,14 @@ ServerScriptService
   GameSetup            Script  round loop, roles, spawning, scoring, saved stats
   CatchDetection       Script  proximity tagging + the catch sequence
   MapEvents            Script  pickups, beacon, rescue (optional, self-contained)
+  Powerups             Script  the three abilities and their cooldowns
 
 StarterPlayer/StarterPlayerScripts
   Sprint               LocalScript  sprint, stamina, stamina bar, mobile button
   ChainTagUI           LocalScript  the whole HUD
   ChainVisuals         LocalScript  chain, outlines, leash, danger glow, map props
   ScoreboardUI         LocalScript  Tab scoreboard and the results panel
+  AbilityBar           LocalScript  ability buttons, cooldown sweeps, dash impulse
 
 Workspace
   ChainTagMap          Folder (runtime): pickups and the beacon
@@ -120,7 +127,10 @@ danger vignette; endgame reveal and last-runner marker; sprint and stamina
 DataStore saving; mid-round joiners sit out and join next round; seeker leaving
 promotes a replacement; solo practice round when `MinPlayers = 1`; energy
 crystals, the roaming beacon with an on-screen needle, prison breaks with an
-immunity window, and a Tab scoreboard that opens itself on the results.
+immunity window, a Tab scoreboard that opens itself on the results, two
+server-checked powerup slots, levels from total points, catch streaks, and the
+screen feedback around them - 3-2-1-GO, catch shake and flash, sprint streaks
+and floating point popups.
 
 ## Still open
 

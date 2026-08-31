@@ -29,6 +29,8 @@ local Config = Shared.Config
 
 local pendingCatch = {}   -- [player] = true while their catch countdown plays
 local nextCatchAt = {}    -- [player] = os.clock() a seeker may tag again
+local comboCount = {}     -- [player] = catches in the current streak
+local comboEndsAt = {}    -- [player] = os.clock() the streak lapses
 local catchSlot = 0       -- keeps the two teleported players off each other's heads
 
 local rayParams = RaycastParams.new()
@@ -39,9 +41,17 @@ pcall(function()
 	rayParams.RespectCanCollide = true
 end)
 
+local STREAK_NAMES = { "", "DOUBLE", "TRIPLE", "QUAD" }
+
+local function streakName(count)
+	return STREAK_NAMES[count] or "RAMPAGE"
+end
+
 Players.PlayerRemoving:Connect(function(player)
 	pendingCatch[player] = nil
 	nextCatchAt[player] = nil
+	comboCount[player] = nil
+	comboEndsAt[player] = nil
 end)
 
 local function bumpCatchesInProgress(delta)
@@ -144,6 +154,17 @@ local function doCatch(catcher, victim)
 		catcher.Name, victim.Name, Config.CatchCountdown, catcher.UserId, victim.UserId)
 	Shared.toast(catcher.Name .. " chained " .. victim.Name, "catch")
 	Shared.log(catcher.Name, "caught", victim.Name)
+
+	-- Streaks: catches stacked up inside the combo window get announced.
+	local now = os.clock()
+	local streak = (comboEndsAt[catcher] and now < comboEndsAt[catcher])
+		and (comboCount[catcher] or 1) + 1
+		or 1
+	comboCount[catcher] = streak
+	comboEndsAt[catcher] = now + Config.Combo.Window
+	if streak >= 2 then
+		Shared.toast(string.upper(catcher.Name) .. " - " .. streakName(streak) .. " CATCH", "catch")
+	end
 
 	-- Sit out the countdown in slices so a player leaving does not strand us.
 	local finishAt = os.clock() + Config.CatchCountdown

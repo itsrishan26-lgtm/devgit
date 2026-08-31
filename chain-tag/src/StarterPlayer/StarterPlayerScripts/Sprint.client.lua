@@ -179,6 +179,11 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	local targetFov = baseFov + (sprinting and Config.Speeds.SprintFov or 0)
 	camera.FieldOfView += (targetFov - camera.FieldOfView) * math.min(1, deltaTime * 5)
 
+	-- Read by ChainTagUI to draw the speed streaks. Client side only.
+	if (player:GetAttribute("CT_Sprinting") == true) ~= sprinting then
+		player:SetAttribute("CT_Sprinting", sprinting)
+	end
+
 	local ratio = stamina / cap
 	fill.Size = UDim2.fromScale(ratio, 1)
 	fill.BackgroundColor3 = exhausted and Config.Colors.Warn

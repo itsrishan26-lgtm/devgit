@@ -26,7 +26,7 @@ local Config = require(script.Parent:WaitForChild("ChainTagConfig"))
 -- problem: one file did not get copied in with the rest.
 local REQUIRED_CONFIG = {
 	"Speeds", "Stamina", "Chain", "Colors", "Sounds", "Points",
-	"Map", "Pickups", "Beacon", "Rescue",
+	"Map", "Pickups", "Beacon", "Rescue", "Abilities", "Levels", "Combo",
 }
 
 do
@@ -49,7 +49,7 @@ Shared.Config = Config
 local IS_SERVER = RunService:IsServer()
 
 -- Remote names created under ReplicatedStorage.ChainTagRemotes.
-local REMOTE_NAMES = { "CatchCountdown", "Toast" }
+local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup" }
 
 -- Default values for every replicated state attribute. Listing them here means
 -- the client never reads a nil attribute, so the HUD is correct on frame one.
@@ -144,6 +144,12 @@ function Shared.timeLeft()
 		return 0
 	end
 	return math.max(0, endsAt - workspace:GetServerTimeNow())
+end
+
+-- Total points earned turns into a level: 2 at 40 points, 3 at 160, 4 at
+-- 360. Both sides work it out the same way so they can never disagree.
+function Shared.levelFromPoints(points)
+	return 1 + math.floor(math.sqrt(math.max(0, points or 0) / Config.Levels.PointsPerLevel))
 end
 
 function Shared.isSeeker(player)
@@ -319,6 +325,11 @@ if IS_SERVER then
 		local value = stats and stats:FindFirstChild(statName)
 		if value then
 			value.Value = value.Value + amount
+			-- Every point a player earns floats up their screen, wherever it
+			-- came from - a catch, the beacon, a prison break, surviving.
+			if statName == "Points" and amount > 0 and Shared.Remotes then
+				Shared.Remotes.Popup:FireClient(player, "+" .. amount)
+			end
 			return
 		end
 		-- Stats not shown on the player list (Wins, Survivals, RoundsPlayed)
