@@ -1,5 +1,5 @@
 --[[
-	ScoreboardUI  —  LocalScript
+	ScoreboardUI  -  LocalScript
 	WHERE IT GOES: StarterPlayer > StarterPlayerScripts > ScoreboardUI
 
 	Hold TAB for the scoreboard. It also opens on its own when a round ends,

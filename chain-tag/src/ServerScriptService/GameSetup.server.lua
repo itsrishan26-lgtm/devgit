@@ -1,5 +1,5 @@
 --[[
-	GameSetup  —  Script  (a normal Script, NOT a LocalScript)
+	GameSetup  -  Script  (a normal Script, NOT a LocalScript)
 	WHERE IT GOES: ServerScriptService > GameSetup
 
 	The round loop and the single source of truth for who is what.
@@ -221,6 +221,15 @@ local function loadStats(player)
 		end)
 		if ok then
 			break
+		end
+		-- "Studio access to APIs is not allowed" is a setting, not a hiccup.
+		-- Retrying it just fills the Output window with red.
+		if string.find(tostring(data), "StudioAccessToApis") then
+			statsWorking = false
+			warn("[ChainTag] Stats will not save in Studio until you tick " ..
+				"File > Game Settings > Security > Enable Studio Access to API Services. " ..
+				"This does not affect a published game.")
+			return
 		end
 		task.wait(2 ^ attempt)
 	end

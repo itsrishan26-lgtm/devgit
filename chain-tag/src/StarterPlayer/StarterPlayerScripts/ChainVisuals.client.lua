@@ -1,5 +1,5 @@
 --[[
-	ChainVisuals  —  LocalScript
+	ChainVisuals  -  LocalScript
 	WHERE IT GOES: StarterPlayer > StarterPlayerScripts > ChainVisuals
 
 	Draws the chain, outlines the people who matter, and works out how much the

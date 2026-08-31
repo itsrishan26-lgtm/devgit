@@ -1,5 +1,5 @@
 --[[
-	ChainTagShared  —  ModuleScript
+	ChainTagShared  -  ModuleScript
 	WHERE IT GOES: ReplicatedStorage > ChainTagShared
 	The name must match EXACTLY.
 

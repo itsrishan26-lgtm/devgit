@@ -1,5 +1,5 @@
 --[[
-	MapEvents  —  Script  (a normal Script, NOT a LocalScript)
+	MapEvents  -  Script  (a normal Script, NOT a LocalScript)
 	WHERE IT GOES: ServerScriptService > MapEvents
 
 	The three things that make the map itself worth moving around in.

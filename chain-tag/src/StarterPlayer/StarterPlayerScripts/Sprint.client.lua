@@ -1,5 +1,5 @@
 --[[
-	Sprint  —  LocalScript
+	Sprint  -  LocalScript
 	WHERE IT GOES: StarterPlayer > StarterPlayerScripts > Sprint
 
 	Hold Shift (or the on-screen Sprint button on phones, or L3 on a gamepad)

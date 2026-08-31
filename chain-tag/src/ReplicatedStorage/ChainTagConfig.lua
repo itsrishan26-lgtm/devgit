@@ -1,10 +1,10 @@
 --[[
-	ChainTagConfig  —  ModuleScript
+	ChainTagConfig  -  ModuleScript
 	WHERE IT GOES: ReplicatedStorage > ChainTagConfig
 	The name must match EXACTLY (no spaces, capital C, capital T, capital C).
 
 	Every number you might want to tweak lives in this one file. Nothing else
-	needs editing to rebalance the game — change a value here, press Play.
+	needs editing to rebalance the game - change a value here, press Play.
 --]]
 
 local Config = {}

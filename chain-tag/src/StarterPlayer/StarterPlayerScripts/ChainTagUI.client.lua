@@ -1,5 +1,5 @@
 --[[
-	ChainTagUI  —  LocalScript
+	ChainTagUI  -  LocalScript
 	WHERE IT GOES: StarterPlayer > StarterPlayerScripts > ChainTagUI
 
 	Everything you read on screen:

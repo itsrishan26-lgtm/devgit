@@ -1,5 +1,5 @@
 --[[
-	CatchDetection  —  Script  (a normal Script, NOT a LocalScript)
+	CatchDetection  -  Script  (a normal Script, NOT a LocalScript)
 	WHERE IT GOES: ServerScriptService > CatchDetection
 
 	Turns "a seeker got close to a runner" into a catch.
