@@ -105,7 +105,26 @@ local function validateSetup()
 		end
 	end
 
-	-- 4. Private sound ids fail with "not authorized" and are easy to miss.
+	-- 4. The other server scripts. Only this one prints a warning list, so
+	--    without this a missing MapEvents just quietly does nothing.
+	local serverScripts = script.Parent
+	local SERVER_SCRIPTS = {
+		{ name = "CatchDetection", required = true, does = "nobody can be tagged at all" },
+		{ name = "MapEvents", required = false, does = "no pickups, no beacon, no prison breaks" },
+		{ name = "Powerups", required = false, does = "no abilities, and the ability bar stays hidden" },
+	}
+	for _, entry in ipairs(SERVER_SCRIPTS) do
+		local found = serverScripts:FindFirstChild(entry.name)
+		if not found then
+			warn(string.format("[ChainTag] ServerScriptService.%s is missing%s - %s. Add it as a Script (README step 3).",
+				entry.name, entry.required and "" or " (optional)", entry.does))
+		elseif not found:IsA("Script") or found:IsA("LocalScript") then
+			warn(string.format("[ChainTag] ServerScriptService.%s is a %s. It has to be a plain Script.",
+				entry.name, found.ClassName))
+		end
+	end
+
+	-- 5. Private sound ids fail with "not authorized" and are easy to miss.
 	local scanned = 0
 	for _, root in ipairs({ workspace, StarterPack, StarterPlayer, ReplicatedStorage, game:GetService("Lighting"), game:GetService("SoundService") }) do
 		for _, item in ipairs(root:GetDescendants()) do
