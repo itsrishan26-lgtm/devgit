@@ -20,6 +20,29 @@ local RunService = game:GetService("RunService")
 
 local Config = require(script.Parent:WaitForChild("ChainTagConfig"))
 
+-- Every section ChainTagConfig is expected to have. Mixing an old config
+-- with newer scripts otherwise dies somewhere in the middle of building the
+-- HUD with "attempt to index nil", which says nothing useful about the real
+-- problem: one file did not get copied in with the rest.
+local REQUIRED_CONFIG = {
+	"Speeds", "Stamina", "Chain", "Colors", "Sounds", "Points",
+	"Map", "Pickups", "Beacon", "Rescue",
+}
+
+do
+	local missing = {}
+	for _, name in ipairs(REQUIRED_CONFIG) do
+		if type(Config[name]) ~= "table" then
+			table.insert(missing, "Config." .. name)
+		end
+	end
+	if #missing > 0 then
+		error("[ChainTag] ChainTagConfig is older than the other scripts - it has no " ..
+			table.concat(missing, ", ") .. ". Copy ChainTagConfig in again from the same " ..
+			"place you got the rest of the files, then press Play again.", 0)
+	end
+end
+
 local Shared = {}
 Shared.Config = Config
 
