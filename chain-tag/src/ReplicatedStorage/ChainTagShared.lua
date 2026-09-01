@@ -51,7 +51,7 @@ Shared.Config = Config
 local IS_SERVER = RunService:IsServer()
 
 -- Remote names created under ReplicatedStorage.ChainTagRemotes.
-local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop", "Settings" }
+local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop", "Settings", "ChainBreak" }
 
 -- Default values for every replicated state attribute. Listing them here means
 -- the client never reads a nil attribute, so the HUD is correct on frame one.
@@ -70,6 +70,8 @@ local STATE_DEFAULTS = {
 	SoloPractice = false,
 	BeaconActive = false,       -- set by MapEvents
 	BeaconPosition = Vector3.zero,
+	ChainLength = 0,            -- set by ChainService
+	SupportCount = 0,
 }
 
 --------------------------------------------------------------------------

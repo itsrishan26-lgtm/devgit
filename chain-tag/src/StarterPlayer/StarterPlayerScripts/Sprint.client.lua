@@ -160,13 +160,16 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		end
 	end
 
-	-- Set by ChainVisuals: 1 normally, lower while the chain is stretched.
-	local chainSlow = player:GetAttribute("CT_ChainSlow") or 1
+	-- Written by ChainService on the server: a multiplier that drops as the
+	-- chain stretches, and a flat bonus while it is in formation. Both are
+	-- server-owned, so no client can talk itself into being faster.
+	local chainMul = player:GetAttribute("ChainMul") or 1
+	local chainAdd = player:GetAttribute("ChainAdd") or 0
 
 	-- Short speed burst from a pickup, on top of everything else.
 	local burst = player:GetAttribute("SpeedBonus") or 0
 
-	local target = (sprinting and sprintSpeed or walkSpeed) * chainSlow + burst
+	local target = (sprinting and sprintSpeed or walkSpeed) * chainMul + burst + chainAdd
 	if frozen then
 		target = 0
 	end

@@ -16,8 +16,6 @@
 	It reads the same, it never flings anyone, and it costs the server nothing.
 
 	Everything this script writes is local to your own client:
-	  CT_ChainSlow   walk speed multiplier, read by the Sprint script
-	  CT_ChainTaut   true when the chain is stretched, read by ChainTagUI
 	  CT_Danger      0..1 how close the nearest seeker is, read by ChainTagUI
 --]]
 
@@ -115,9 +113,8 @@ local function anchorPoint(root)
 	return root.CFrame:PointToWorldSpace(Vector3.new(0, -0.6, 0))
 end
 
-local function drawChain(set, fromPosition, toPosition, color)
+local function drawChain(set, fromPosition, toPosition, color, sag)
 	local count = #set.parts
-	local sag = ChainConfig.Sag
 	local step = 1 / (count + 1)
 
 	local function samplePoint(t)
@@ -511,7 +508,6 @@ end
 --------------------------------------------------------------------------
 
 local pairsList = {}       -- { { owner = player, partner = player } }
-local chainNeighbours = {} -- players chained to the local player
 
 local function playerFromUserId(userId)
 	if not userId or userId == 0 then
@@ -537,7 +533,6 @@ local function rebuildRelationships()
 		and (player:GetAttribute("RadarUntil") or 0) > workspace:GetServerTimeNow()
 
 	table.clear(pairsList)
-	table.clear(chainNeighbours)
 
 	local seen = {}
 	local beaconTarget
@@ -550,11 +545,6 @@ local function rebuildRelationships()
 		if ChainConfig.Mode ~= "Off" and hunting and inRound and partner and partner ~= other then
 			table.insert(pairsList, { owner = other, partner = partner })
 			seen[other] = true
-			if other == player then
-				table.insert(chainNeighbours, partner)
-			elseif partner == player then
-				table.insert(chainNeighbours, other)
-			end
 		end
 
 		-- Outlines
@@ -568,7 +558,11 @@ local function rebuildRelationships()
 			-- Just broken out of the chain and briefly untouchable.
 			setHighlight(other, Config.Colors.Good, true)
 		elseif Shared.isSeeker(other) then
-			setHighlight(other, Config.Colors.Seeker, false)
+			-- Support Seekers are amber, chained seekers red: a runner can
+			-- tell at a glance whether the thing chasing them is tied to
+			-- three other people or completely free.
+			local supporting = other:GetAttribute("IsSupport") == true
+			setHighlight(other, supporting and Config.Colors.Warn or Config.Colors.Seeker, false)
 		elseif lastRunnerId == other.UserId and Config.LastRunnerBeacon then
 			setHighlight(other, Config.Colors.Warn, true)
 			beaconTarget = other
@@ -775,8 +769,22 @@ RunService.RenderStepped:Connect(function(deltaTime)
 			local offset = from - cameraPosition
 			if offset:Dot(offset) <= renderDistanceSquared then
 				setLinkSetShown(set, true)
+
+				-- The link reads its own tension: colour runs from its
+				-- normal shade through amber to red, and the sag pulls out
+				-- of it as it tightens. That is the whole warning system -
+				-- you can see a chain about to snap from across the park.
+				local stretch = link.owner:GetAttribute("LinkStretch") or 0
 				local bought = Shared.equipped(link.owner, "Chain")
-				drawChain(set, from, to, bought and bought.color or ChainConfig.Color)
+				local base = bought and bought.color or ChainConfig.Color
+				local color
+				if stretch < 0.6 then
+					color = base:Lerp(Config.Colors.Warn, stretch / 0.6)
+				else
+					color = Config.Colors.Warn:Lerp(Config.Colors.Seeker, (stretch - 0.6) / 0.4)
+				end
+
+				drawChain(set, from, to, color, ChainConfig.Sag * (1 - stretch * 0.85))
 			else
 				setLinkSetShown(set, false)
 			end
@@ -785,29 +793,8 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		end
 	end
 
-	-- The leash is the one thing that has to be per frame: it feeds your
-	-- walk speed, and at 10 Hz you would feel it stepping.
-	local slow, taut = 1, false
-	if ChainConfig.Mode == "Leash" and #chainNeighbours > 0 then
-		local myRoot = Shared.getRoot(player)
-		if myRoot then
-			local worst = 0
-			for _, neighbour in ipairs(chainNeighbours) do
-				local otherRoot = Shared.getRoot(neighbour)
-				if otherRoot then
-					worst = math.max(worst, (otherRoot.Position - myRoot.Position).Magnitude)
-				end
-			end
-			if worst > ChainConfig.SlowStart then
-				local span = math.max(0.01, ChainConfig.MaxDistance - ChainConfig.SlowStart)
-				local stretch = math.clamp((worst - ChainConfig.SlowStart) / span, 0, 1)
-				slow = 1 - stretch * (1 - ChainConfig.MinSpeedFactor)
-				taut = stretch >= 0.95
-			end
-		end
-	end
-	setLocalAttribute("CT_ChainSlow", slow, 0.01)
-	setLocalAttribute("CT_ChainTaut", taut)
+	-- No leash maths here any more. ChainService owns tension and speed on
+	-- the server and writes them to attributes; this script only draws.
 end)
 
 print("[ChainTag] ChainVisuals loaded. Chain mode: " .. tostring(ChainConfig.Mode))

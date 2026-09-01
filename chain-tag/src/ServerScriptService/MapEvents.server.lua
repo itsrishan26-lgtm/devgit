@@ -32,7 +32,13 @@ if not sharedModule then
 	error("[ChainTag] ReplicatedStorage.ChainTagShared is missing (README step 2).")
 end
 
+local chainModule = script.Parent:FindFirstChild("ChainService")
+if not chainModule then
+	error("[ChainTag] ServerScriptService.ChainService is missing - add it as a ModuleScript (README step 3).")
+end
+
 local Shared = require(sharedModule)
+local ChainService = require(chainModule)
 local Config = Shared.Config
 
 local folder = Instance.new("Folder")
@@ -389,17 +395,6 @@ local function clearRescue(rescuer)
 	rescuer:SetAttribute("RescueTargetId", 0)
 end
 
--- Only the far end of a chain can be freed: if somebody is chained to them,
--- breaking the link would orphan whoever is behind them.
-local function isChainEnd(player)
-	for _, other in ipairs(Players:GetPlayers()) do
-		if other ~= player and other:GetAttribute("ChainedTo") == player.UserId then
-			return false
-		end
-	end
-	return true
-end
-
 local function canBeFreed(player)
 	if not (Shared.inRound(player) and Shared.isSeeker(player)) then
 		return false
@@ -413,12 +408,14 @@ local function canBeFreed(player)
 	if player:GetAttribute("Frozen") == true then
 		return false   -- mid catch countdown
 	end
-	return isChainEnd(player)
+	-- Any prisoner can be freed now, chained or Support: the chain is a
+	-- line and ChainService closes the gap behind whoever leaves it.
+	return true
 end
 
 local function freePlayer(target, rescuer)
 	target:SetAttribute("IsSeeker", false)
-	target:SetAttribute("ChainedTo", nil)
+	ChainService.Remove(target)
 	target:SetAttribute("Rescued", true)
 	target:SetAttribute("BeingRescued", false)
 	target:SetAttribute("Immune", true)

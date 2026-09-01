@@ -92,9 +92,36 @@ Config.Stamina = {
 
 Config.Chain = {
 	Mode = "Leash",
-	SlowStart = 14,        -- studs apart before the chain starts to bite
-	MaxDistance = 22,      -- studs where the chain is fully taut
-	MinSpeedFactor = 0.3,  -- slowest you can be dragged down to
+
+	-- THE SHAPE OF THE CHAIN
+	-- A line, never a tree, and never longer than this. An eight-person
+	-- chain is not four times as interesting as a four-person one; it is a
+	-- conga line that cannot lose. Everyone caught past the cap becomes a
+	-- Support Seeker instead - free-roaming, no chain, faster scans.
+	MaxLength = 4,
+
+	-- WHY BREAKING IT IS A RUNNER'S WIN
+	-- A chain in formation is FASTER than four loose seekers. That is the
+	-- whole balance: the chain is a reward the seekers have to hold on to
+	-- by moving as a unit, so stretching it costs them speed and snapping
+	-- it costs them the bonus outright. Without this the chain is pure
+	-- penalty, and breaking it would be doing the seekers a favour.
+	FormationBonus = 3,    -- extra studs/sec while the whole chain is tight
+
+	SlowStart = 14,        -- inside this, the chain is in formation
+	MaxDistance = 22,      -- bonus is gone, slowdown starts to bite
+	MinSpeedFactor = 0.3,  -- slowest a stretched chain can drag you
+	WarnDistance = 30,     -- the chain groans; everyone gets told
+	BreakDistance = 38,    -- past here the clock starts
+	BreakGrace = 1.1,      -- seconds beyond BreakDistance before it snaps
+
+	-- What a break costs the seekers, and pays the runner who forced it.
+	RecoilTime = 3,        -- how long the member who lost their link is slow
+	RecoilFactor = 0.55,
+	BreakPoints = 30,
+	BreakCreditRange = 70, -- a runner this close to the snap gets the credit
+	RefillDelay = 4,       -- before a Support Seeker is pulled into the gap
+
 	Links = 7,
 	LinkSize = Vector3.new(0.45, 0.45, 0.95),
 	Color = Color3.fromRGB(148, 151, 158),
@@ -301,8 +328,11 @@ Config.Abilities = {
 	},
 
 	-- Seekers only: every runner lights up through walls for a moment.
+	-- Support Seekers - the ones the chain had no room for - get it back
+	-- faster. That is their whole identity: no chain, better eyes.
 	Radar = {
 		Cooldown = 24,
+		SupportScale = 0.5,
 		Duration = 4,
 	},
 

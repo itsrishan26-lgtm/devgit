@@ -24,7 +24,13 @@ if not sharedModule then
 	error("[ChainTag] ReplicatedStorage.ChainTagShared is missing (README step 2).")
 end
 
+local chainModule = script.Parent:FindFirstChild("ChainService")
+if not chainModule then
+	error("[ChainTag] ServerScriptService.ChainService is missing - add it as a ModuleScript (README step 3).")
+end
+
 local Shared = require(sharedModule)
+local ChainService = require(chainModule)
 local Config = Shared.Config
 
 local pendingCatch = {}   -- [player] = true while their catch countdown plays
@@ -110,37 +116,22 @@ local function seekerSpawn()
 	return Shared.findSpawn(Config.SeekerSpawnName)
 end
 
--- Everyone joined to this player by the chain, following it in both
--- directions. Used so a catch pulls the whole chain home instead of ripping
--- the catcher away from the people already attached to them.
-local function chainGroup(startPlayer)
-	local byUserId = {}
-	for _, player in ipairs(Players:GetPlayers()) do
-		byUserId[player.UserId] = player
+-- Who gets pulled home after a catch: the chain, plus the two players
+-- involved in case either of them is not on it (a Support Seeker can tag,
+-- and the runner they just caught may have become one).
+local function catchGroup(catcher, victim)
+	local group = ChainService.Group()
+	local seen = {}
+	for _, member in ipairs(group) do
+		seen[member] = true
 	end
-
-	local found = { [startPlayer] = true }
-	local queue = { startPlayer }
-	while #queue > 0 do
-		local current = table.remove(queue)
-		local parent = byUserId[current:GetAttribute("ChainedTo") or 0]
-		if parent and not found[parent] then
-			found[parent] = true
-			table.insert(queue, parent)
-		end
-		for _, player in ipairs(Players:GetPlayers()) do
-			if not found[player] and player:GetAttribute("ChainedTo") == current.UserId then
-				found[player] = true
-				table.insert(queue, player)
-			end
+	for _, player in ipairs({ catcher, victim }) do
+		if not seen[player] then
+			table.insert(group, player)
+			seen[player] = true
 		end
 	end
-
-	local list = {}
-	for player in pairs(found) do
-		table.insert(list, player)
-	end
-	return list
+	return group
 end
 
 local function doCatch(catcher, victim)
@@ -153,11 +144,15 @@ local function doCatch(catcher, victim)
 
 	-- Flip the role immediately so nobody else can tag the same runner.
 	victim:SetAttribute("IsSeeker", true)
-	victim:SetAttribute("ChainedTo", catcher.UserId)
 	-- Marks them as a prisoner rather than the original seeker, which is
 	-- what makes them eligible to be broken out again (see MapEvents).
 	victim:SetAttribute("CaughtThisRound", true)
 	victim:SetAttribute("BeingRescued", false)
+
+	-- ChainService decides whether there is room on the chain for them or
+	-- whether they come in as a Support Seeker. It owns the line; this
+	-- script only reports the catch.
+	local joined = ChainService.Add(victim)
 	local seekerTeam = Teams:FindFirstChild("Seekers")
 	if seekerTeam then
 		victim.Team = seekerTeam
@@ -171,7 +166,7 @@ local function doCatch(catcher, victim)
 	-- to base, the rest of their chain freezes and travels with them - being
 	-- dragged home is the cost the seeker team pays for every catch, and it
 	-- hands the runners a breather.
-	local held = Config.TeleportOnCatch and chainGroup(catcher) or { catcher, victim }
+	local held = Config.TeleportOnCatch and catchGroup(catcher, victim) or { catcher, victim }
 	for _, player in ipairs(held) do
 		Shared.setFrozen(player, true)
 		Shared.setAnchored(player, true)
@@ -179,7 +174,12 @@ local function doCatch(catcher, victim)
 
 	Shared.Remotes.CatchCountdown:FireAllClients(
 		catcher.Name, victim.Name, Config.CatchCountdown, catcher.UserId, victim.UserId)
-	Shared.toast(catcher.Name .. " chained " .. victim.Name, "catch")
+	if joined == "support" then
+		Shared.toast(catcher.Name .. " caught " .. victim.Name .. " - chain full, "
+			.. victim.Name .. " is a Support Seeker", "catch")
+	else
+		Shared.toast(catcher.Name .. " chained " .. victim.Name, "catch")
+	end
 	Shared.log(catcher.Name, "caught", victim.Name)
 
 	-- Streaks: catches stacked up inside the combo window get announced.

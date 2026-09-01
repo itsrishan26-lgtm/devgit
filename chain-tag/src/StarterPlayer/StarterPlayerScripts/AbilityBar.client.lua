@@ -268,6 +268,10 @@ RunService.RenderStepped:Connect(function()
 			continue
 		end
 		local cooldown = Config.Abilities[ability].Cooldown
+		if ability == "Radar" and player:GetAttribute("IsSupport") == true then
+			-- Must match the server, or the sweep drains at the wrong rate.
+			cooldown *= Config.Abilities.Radar.SupportScale
+		end
 		local readyAt = player:GetAttribute("AbilityReady_" .. ability) or 0
 		local remaining = math.max(0, readyAt - now)
 		local ready = remaining <= 0

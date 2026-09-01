@@ -915,6 +915,19 @@ local function refreshCounts()
 		if State:GetAttribute("SoloPractice") then
 			runnersLabel.Text = "SOLO PRACTICE"
 			runnersLabel.TextColor3 = toastColors.info
+		elseif Shared.isSeeker(player) then
+			-- Seekers care about their own formation; runners care about how
+			-- many of them are left. Same slot, different question. The pips
+			-- below stay on runners for both, because that is the objective.
+			local length = State:GetAttribute("ChainLength") or 0
+			local supporting = State:GetAttribute("SupportCount") or 0
+			local text = string.format("CHAIN %d/%d", length, Config.Chain.MaxLength)
+			if supporting > 0 then
+				text = text .. string.format("   %d SUPPORT", supporting)
+			end
+			runnersLabel.Text = text
+			runnersLabel.TextColor3 = player:GetAttribute("IsSupport") == true
+				and Config.Colors.Warn or Config.Colors.Seeker
 		else
 			runnersLabel.Text = string.format("%d OF %d RUNNERS FREE", left, total)
 			runnersLabel.TextColor3 = left <= 1 and Config.Colors.Warn or Config.Colors.Runner
@@ -1002,6 +1015,9 @@ end
 State:GetAttributeChangedSignal("Phase"):Connect(onPhaseChanged)
 State:GetAttributeChangedSignal("RunnersLeft"):Connect(refreshCounts)
 State:GetAttributeChangedSignal("TotalRunners"):Connect(refreshCounts)
+State:GetAttributeChangedSignal("ChainLength"):Connect(refreshCounts)
+State:GetAttributeChangedSignal("SupportCount"):Connect(refreshCounts)
+player:GetAttributeChangedSignal("IsSupport"):Connect(refreshCounts)
 Players.PlayerAdded:Connect(refreshCounts)
 Players.PlayerRemoving:Connect(refreshCounts)
 
@@ -1059,6 +1075,24 @@ end)
 
 Remotes.Toast.OnClientEvent:Connect(pushToast)
 Remotes.Popup.OnClientEvent:Connect(showPopup)
+
+Remotes.ChainBreak.OnClientEvent:Connect(function(_, runnerId)
+	local mine = runnerId == player.UserId
+	local seeker = Shared.isSeeker(player)
+
+	-- A banner for the people it happened to and the runner who earned it;
+	-- everyone else already gets the line in the feed. A break is loud, but
+	-- it is not everyone's business.
+	if mine then
+		showBanner("CHAIN BROKEN", "You forced them apart", Config.Colors.Good, 2.4)
+		Shared.playCue("Win")
+	elseif seeker then
+		showBanner("CHAIN BROKEN", "Regroup", Config.Colors.Seeker, 2.2)
+		Shared.playCue("Lose")
+		addShake(0.5, 0.4)
+		screenFlash(Config.Colors.Seeker, 0.25)
+	end
+end)
 
 Remotes.Collect.OnClientEvent:Connect(function(_, rarityName, collectorId)
 	local rarity = Shared.rarity(rarityName)
@@ -1218,10 +1252,21 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		bar.BackgroundTransparency += (goal - bar.BackgroundTransparency) * math.min(1, deltaTime * 6)
 	end
 
-	local taut = player:GetAttribute("CT_ChainTaut") == true
-	tautLabel.Visible = taut
-	if taut then
+	-- Two stages, so a stretched chain and a chain about to snap do not
+	-- look the same. The pulse speeds up with the danger.
+	local chainState = player:GetAttribute("ChainState")
+	if chainState == "Warning" then
+		tautLabel.Visible = true
+		tautLabel.Text = "CHAIN BREAKING"
+		tautLabel.TextColor3 = Config.Colors.Seeker
+		tautLabel.TextTransparency = 0.15 + 0.25 * math.sin(os.clock() * 14)
+	elseif chainState == "Stretched" then
+		tautLabel.Visible = true
+		tautLabel.Text = "CHAIN TAUT"
+		tautLabel.TextColor3 = Config.Colors.Warn
 		tautLabel.TextTransparency = 0.25 + 0.25 * math.sin(os.clock() * 8)
+	else
+		tautLabel.Visible = false
 	end
 
 	-- One pill, whichever of the two is currently true.

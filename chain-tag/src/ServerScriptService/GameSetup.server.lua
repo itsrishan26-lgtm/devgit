@@ -32,7 +32,13 @@ if not sharedModule then
 		"Add the ChainTagConfig and ChainTagShared ModuleScripts first (README step 2).")
 end
 
+local chainModule = script.Parent:FindFirstChild("ChainService")
+if not chainModule then
+	error("[ChainTag] ServerScriptService.ChainService is missing - add it as a ModuleScript (README step 3).")
+end
+
 local Shared = require(sharedModule)
+local ChainService = require(chainModule)
 local Config = Shared.Config
 
 --------------------------------------------------------------------------
@@ -179,7 +185,8 @@ local runnerTeam = ensureTeam("Runners", BrickColor.new("Bright blue"))
 -- Saved stats
 --------------------------------------------------------------------------
 
-local STAT_KEYS = { "Points", "TotalPoints", "Catches", "Wins", "Survivals", "RoundsPlayed", "Rescues" }
+local STAT_KEYS = { "Points", "TotalPoints", "Catches", "Wins", "Survivals",
+	"RoundsPlayed", "Rescues", "ChainBreaks" }
 local LEADERSTAT_KEYS = { Points = true, Catches = true }
 
 -- Saved the same way, but they hold text rather than numbers: what the
@@ -525,6 +532,7 @@ local ROUND_ATTRIBUTES = {
 }
 
 local function resetEveryone()
+	ChainService.Reset()
 	for _, player in ipairs(Players:GetPlayers()) do
 		setRole(player, false, true)
 		Shared.setAnchored(player, false)
@@ -622,6 +630,8 @@ local function runHunt()
 	local revealed = false
 	while Shared.timeLeft() > 0 do
 		task.wait(0.1)
+		-- Tension, formation speed and breaks, ten times a second.
+		ChainService.Update()
 		local seekers, runners = publishCounts()
 
 		if #seekers + #runners < 2 then
@@ -635,6 +645,7 @@ local function runHunt()
 				return "None"
 			end
 			setRole(replacement, true, true)
+			ChainService.Start(replacement)
 			lastSeekerUserId = replacement.UserId
 			Shared.toast(replacement.Name .. " is the new seeker", "seeker")
 			publishCounts()
@@ -678,6 +689,7 @@ local function playRound()
 			return  -- nobody has a character yet; try again next cycle
 		end
 		setRole(seeker, true, true)
+		ChainService.Start(seeker)
 		lastSeekerUserId = seeker.UserId
 	end
 
@@ -734,6 +746,8 @@ local function playRound()
 		winner = runHunt()
 	end
 	_G.GameActive = false
+	-- The chain stays drawn for the banner, but stops dragging anybody.
+	ChainService.Relax()
 
 	-- RESULTS --------------------------------------------------------------
 	local seekers, runners = countRoles()

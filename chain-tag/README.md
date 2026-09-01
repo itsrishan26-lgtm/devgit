@@ -49,18 +49,20 @@ file into each:
 You do **not** create the RemoteEvents by hand — `ChainTagShared` builds them
 when the server starts.
 
-### Step 3 — ServerScriptService (two Scripts)
+### Step 3 — ServerScriptService
 
-Insert two **Script**s (the plain kind, not LocalScript) under
-`ServerScriptService`:
+**Watch the Type column.** `ChainService` is a **ModuleScript**; everything
+else here is a plain **Script**. Insert the wrong class and it silently never
+runs.
 
-| Name it exactly | Paste from |
-|---|---|
-| `GameSetup` | `src/ServerScriptService/GameSetup.server.lua` |
-| `CatchDetection` | `src/ServerScriptService/CatchDetection.server.lua` |
-| `MapEvents` | `src/ServerScriptService/MapEvents.server.lua` |
-| `Powerups` | `src/ServerScriptService/Powerups.server.lua` |
-| `Shop` | `src/ServerScriptService/Shop.server.lua` |
+| Name it exactly | Type | Paste from |
+|---|---|---|
+| `GameSetup` | Script | `src/ServerScriptService/GameSetup.server.lua` |
+| `CatchDetection` | Script | `src/ServerScriptService/CatchDetection.server.lua` |
+| `MapEvents` | Script | `src/ServerScriptService/MapEvents.server.lua` |
+| `Powerups` | Script | `src/ServerScriptService/Powerups.server.lua` |
+| `Shop` | Script | `src/ServerScriptService/Shop.server.lua` |
+| `ChainService` | **ModuleScript** | `src/ServerScriptService/ChainService.lua` |
 
 If you already have scripts with these names, paste over them completely.
 
@@ -144,6 +146,7 @@ ServerScriptService
   MapEvents                     Script         pickups, beacon, rescue
   Powerups                      Script         abilities and their cooldowns
   Shop                          Script         purchases and equipping
+  ChainService                  ModuleScript   the chain: order, tension, breaks
 
 StarterPlayer
   StarterPlayerScripts
@@ -447,15 +450,50 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 
 ### About the chain
 
-The old version welded parts with `RopeConstraint`s between two characters.
-Roblox gives each player physics ownership of their own character, so a rope
-between two of them is two computers fighting over the same simulation — that
-is exactly why long chains got jostly and people occasionally got launched.
+The chain is a **line of at most four**, and the fourth one is the number
+that matters. An eight-person chain is not twice as interesting as a
+four-person one — it is a conga line that cannot lose. Everyone caught past
+the cap becomes a **Support Seeker** instead: no chain, no formation bonus,
+but a Radar that recharges twice as fast. No chain, better eyes.
 
-This version draws the chain **on each client with no physics at all**, and
-does the pulling by slowing both ends down as they drift apart (`Chain.SlowStart`
-to `Chain.MaxDistance`). Chained players still have to move as a group, but
-nothing can fling anybody, and the server does no chain work at all.
+**A chain in formation is faster than four loose seekers.** This is the whole
+balance and everything else follows from it. Being chained has to be a prize
+the seekers hold on to by moving as a unit — otherwise it is pure penalty,
+and a runner breaking it would be doing the seeker team a favour.
+
+| Distance between two links | What happens |
+|---|---|
+| under 14 studs | **Formation** — everyone on the chain is faster |
+| 14 to 22 | bonus fades out |
+| 22 to 30 | **Stretched** — the chain starts dragging, down to 30% speed |
+| 30 to 38 | **Warning** — the link glows red, both ends are told |
+| past 38 for 1.1s | **SNAP** |
+
+You can read all of it off the chain itself: the links run from grey through
+amber to red as they stretch, and the sag pulls out of them as they tighten.
+A chain about to break is visible from across the park.
+
+**When it snaps**, everyone behind the break detaches into Support Seekers,
+the member left holding the front half recoils to 55% speed for three
+seconds, and the nearest runner is paid 30 points and a `ChainBreaks` stat
+for forcing it. A Support Seeker walks into the empty slot four seconds
+later, so a break buys the runners a window rather than permanently crippling
+the seeker team.
+
+That is what makes the chain a mechanic rather than a decoration: a runner
+who baits two seekers around opposite sides of a building takes their speed
+bonus away, and both sides know it.
+
+The whole thing lives in `ChainService`, which owns membership, order,
+tension, speed and breaks. It is **server-authoritative** — the client draws
+the chain, it does not decide who is on it, how fast they are, or when it
+breaks. Rescues and catches call in; nothing else needs to know how a chain
+works.
+
+*(Note on physics: none of this uses `RopeConstraint`. Ropes between two
+player characters are a tug of war between two machines' physics ownership,
+which is what made long chains jostle and occasionally launch people. The
+links are drawn locally and the tension is simulated, not physical.)*
 
 ### The settings panel
 
@@ -504,6 +542,12 @@ Studio, **Test > Players > 2 Players**:
 - [ ] Walking into a runner as the seeker triggers the red 3-2-1 on both screens
 - [ ] After the countdown both players are at Seeker Spawn with a chain between them
 - [ ] A third catch drags the whole existing chain home, not just the catcher
+- [ ] The chain stops at four; the fifth catch says SUPPORT SEEKER in the feed
+- [ ] Walking together as a chain is faster than walking alone
+- [ ] Pulling apart turns the links amber then red, and the HUD warns twice
+- [ ] Past breaking distance the chain snaps, the banner fires, and the nearest runner scores
+- [ ] After a break a Support Seeker walks into the empty slot a few seconds later
+- [ ] A seeker's HUD reads CHAIN 3/4; a runner's reads how many runners are free
 - [ ] The chained pair slows down when they pull apart, and `CHAIN TAUT` appears
 - [ ] `RUNNERS FREE` drops by one, and a dot in the pip row goes dark
 - [ ] Catching the last runner ends the round immediately with `SEEKERS WIN`

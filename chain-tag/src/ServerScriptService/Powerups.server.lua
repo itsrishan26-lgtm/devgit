@@ -106,7 +106,13 @@ local function useDash(player)
 end
 
 local function useRadar(player)
-	startCooldown(player, "Radar", Abilities.Radar.Cooldown)
+	-- Support Seekers have no chain and no formation bonus; a faster scan
+	-- is what they get instead, and it is their whole identity.
+	local cooldown = Abilities.Radar.Cooldown
+	if player:GetAttribute("IsSupport") == true then
+		cooldown *= Abilities.Radar.SupportScale
+	end
+	startCooldown(player, "Radar", cooldown)
 	player:SetAttribute("RadarUntil", workspace:GetServerTimeNow() + Abilities.Radar.Duration)
 	Shared.toast(player.Name .. " swept the park", "seeker")
 end

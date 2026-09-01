@@ -12,10 +12,18 @@ Round-based chain tag (Roblox, Luau).
   are runners and start at **Runner Spawn** (blue).
 * Seekers get an 8 second freeze at the start so runners can scatter.
 * A seeker within 6 studs of a runner, with line of sight, catches them: a red
-  3-2-1 plays on every screen, then the catcher's entire chain plus the new
-  prisoner is pulled back to Seeker Spawn and released. The caught player is
-  now a seeker. Losing position on every catch is what keeps a long chain from
-  steamrolling the round.
+  3-2-1 plays on every screen, then the chain plus the new prisoner is pulled
+  back to Seeker Spawn and released. Losing position on every catch is what
+  keeps the seeker team from steamrolling.
+* **The chain is a line of at most four.** Overflow catches become Support
+  Seekers - free-roaming, no formation bonus, Radar at half cooldown. A chain
+  in formation is FASTER than four loose seekers, which is the whole balance:
+  it is a prize the seekers hold by moving as a unit, so stretching it costs
+  speed and snapping it costs the bonus. Past 38 studs for 1.1s a link snaps,
+  the tail detaches into Support Seekers, the member holding the front half
+  recoils, and the nearest runner takes 30 points and a ChainBreaks stat.
+  A Support Seeker refills the gap after four seconds. All of it is in
+  ChainService and all of it is server-authoritative.
 * Seekers win by catching everyone before the timer. If one runner is still
   free when it hits zero, runners win.
 * With 30 seconds left the remaining runners are outlined through walls for the
@@ -80,6 +88,7 @@ ServerScriptService
   CatchDetection       Script  proximity tagging + the catch sequence
   MapEvents            Script  pickups, beacon, rescue (optional, self-contained)
   Powerups             Script  the three abilities and their cooldowns
+  ChainService         ModuleScript  chain order, tension, breaks, chain speed
   Shop                 Script  purchases, equipping, ownership
 
 StarterPlayer/StarterPlayerScripts
