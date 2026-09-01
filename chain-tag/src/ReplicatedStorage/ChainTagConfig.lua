@@ -9,6 +9,14 @@
 
 local Config = {}
 
+-- Printed to Output on every server start. If Studio is not showing the
+-- build you expect, the files Studio has are not the files you think it
+-- has - you have not pulled, or Rojo is not connected, or you are looking
+-- at a copy that was pasted in by hand. It answers that question in one
+-- line instead of three screenshots.
+Config.Version = "0.9.0  task-2 movement"
+
+
 --------------------------------------------------------------------------
 -- ROUND FLOW (all times in seconds)
 --------------------------------------------------------------------------

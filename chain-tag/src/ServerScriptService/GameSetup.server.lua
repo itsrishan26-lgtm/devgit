@@ -795,5 +795,6 @@ task.spawn(function()
 	end
 end)
 
+print("[ChainTag] Build " .. Config.Version)
 print("[ChainTag] GameSetup running. Round length " .. Config.RoundLength ..
 	"s, " .. Config.MinPlayers .. " player(s) needed.")
