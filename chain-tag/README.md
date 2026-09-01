@@ -63,6 +63,7 @@ runs.
 | `Powerups` | Script | `src/ServerScriptService/Powerups.server.lua` |
 | `Shop` | Script | `src/ServerScriptService/Shop.server.lua` |
 | `ChainService` | **ModuleScript** | `src/ServerScriptService/ChainService.lua` |
+| `MovementService` | Script | `src/ServerScriptService/MovementService.server.lua` |
 
 If you already have scripts with these names, paste over them completely.
 
@@ -79,6 +80,7 @@ Insert three **LocalScript**s under `StarterPlayer > StarterPlayerScripts`:
 | `AbilityBar` | `src/StarterPlayer/StarterPlayerScripts/AbilityBar.client.lua` |
 | `ShopUI` | `src/StarterPlayer/StarterPlayerScripts/ShopUI.client.lua` |
 | `ChainTagSettings` | `src/StarterPlayer/StarterPlayerScripts/ChainTagSettings.client.lua` |
+| `Movement` | `src/StarterPlayer/StarterPlayerScripts/Movement.client.lua` |
 
 ### Step 5 — delete the old stuff
 
@@ -105,15 +107,17 @@ The Output window should show:
 [ChainTag] MapEvents running. Pickups: true, beacon: true, rescue: true
 [ChainTag] Powerups running. Dash 9s, Radar 24s, Vanish 26s.
 [ChainTag] Shop running. 10 items in the catalogue.
+[ChainTag] MovementService running. Slide and vault validated server-side.
 [ChainTag] ChainTagUI loaded and listening.
 [ChainTag] ChainVisuals loaded. Chain mode: Leash
 [ChainTag] ScoreboardUI loaded. Hold Tab.
 [ChainTag] AbilityBar loaded. Keys 1 and 2.
 [ChainTag] ShopUI loaded. Press P or click STORE.
 [ChainTag] ChainTagSettings loaded. Press O or click SETTINGS.
+[ChainTag] Movement loaded. C to slide, Space to vault.
 ```
 
-Five from the server, six from the client. A few seconds later one more line
+Six from the server, seven from the client. A few seconds later one more line
 appears saying what frame rate it measured and which quality level it chose. **If the client four are
 missing, the LocalScripts are not installed** — and `GameSetup` will name
 each missing one in a warning, including if you added it as the wrong class
@@ -147,6 +151,7 @@ ServerScriptService
   Powerups                      Script         abilities and their cooldowns
   Shop                          Script         purchases and equipping
   ChainService                  ModuleScript   the chain: order, tension, breaks
+  MovementService               Script         validates and counts slides/vaults
 
 StarterPlayer
   StarterPlayerScripts
@@ -156,6 +161,7 @@ StarterPlayer
     ScoreboardUI                LocalScript    Tab scoreboard + results
     AbilityBar                  LocalScript    the two ability buttons
     ShopUI                      LocalScript    the store panel
+    Movement                    LocalScript    slide, vault, landing weight
     ChainTagSettings            LocalScript    settings, and the quality dial
 
 Workspace
@@ -257,6 +263,49 @@ read the second one.
 Adding an item is one line in `Config.Shop.Items` — the store UI builds itself
 from that list, and the server re-reads the price and your balance from its own
 copy, so nothing about a purchase trusts your client.
+
+### Movement
+
+| | |
+|---|---|
+| **Shift** | sprint (stamina) |
+| **C** or Ctrl | slide |
+| **Space** at something waist-high | vault it instead of jumping into it |
+
+All three are on every player from their first round. **Nothing about
+movement is ever unlocked, bought or levelled into** — the moment movement
+is a reward, the chase stops being about skill and starts being about
+playtime.
+
+**Sliding** needs you to already be moving at 17 studs/sec, so it rewards
+commitment rather than being a second dash. It starts at 34 and sheds speed,
+locks your steering for its length, and costs 12 stamina. That last part is
+what stops it being a permanent way to travel.
+
+**Vaulting** is on the jump button on purpose — no new key to learn, and the
+game works out what you meant. It fires when there is something between 1.2
+and 4.6 studs tall ahead of you, nothing at chest height, and floor on the
+far side to land on. If any of that is missing you just jump. You keep 24
+studs/sec of momentum on the other side, so a vault is faster than going
+around, which is the whole reason to learn where they are.
+
+**Landings** have weight. Drop more than 14 studs and the camera dips; more
+than 30 and you lose half your speed for half a second. Without that, a
+rooftop is a free escape from anything.
+
+#### How it is split
+
+Movement runs on the client and answers on the same frame you press the key.
+A round trip to the server first would put 100ms of nothing between the
+button and the slide, and no amount of correctness makes that feel good.
+
+`MovementService` on the server owns the cooldowns and the counters. That is
+the part worth protecting: Roblox gives every client authority over its own
+character's physics, so pretending the server can stop a cheater from moving
+strangely would be theatre — but **nothing is ever paid out from a client's
+word**, so a player spamming the remote earns nothing for it. Server
+cooldowns run slightly shorter than the client's so a bad connection is never
+told no for a move it legitimately made.
 
 ### Powerups
 
@@ -431,6 +480,10 @@ Open `ChainTagConfig`. The ones you will actually reach for:
 | `Beacon.MoveEvery` | 35 | seconds before the beacon jumps somewhere new |
 | `Rescue.Enabled` | true | prison breaks; false removes the mechanic entirely |
 | `Rescue.HoldTime` | 4 | seconds you have to hold to free someone |
+| `Movement.Slide.MinSpeed` | 17 | how fast you must be going to slide at all |
+| `Movement.Slide.Stamina` | 12 | what a slide costs |
+| `Movement.Vault.MaxHeight` | 4.6 | the tallest thing you can clear |
+| `Movement.Landing.HardDrop` | 30 | fall further than this and you stumble |
 | `Abilities.Enabled` | true | false hides the ability bar and refuses every use |
 | `Abilities.Dash.Cooldown` | 9 | seconds between dashes |
 | `Abilities.Dash.Power` | 62 | how hard the dash shoves |
@@ -548,6 +601,12 @@ Studio, **Test > Players > 2 Players**:
 - [ ] Past breaking distance the chain snaps, the banner fires, and the nearest runner scores
 - [ ] After a break a Support Seeker walks into the empty slot a few seconds later
 - [ ] A seeker's HUD reads CHAIN 3/4; a runner's reads how many runners are free
+- [ ] Sprinting then pressing C slides, locks your steering, and costs stamina
+- [ ] Sliding from a standstill does nothing (you have to already be moving)
+- [ ] Space at a waist-high wall vaults it; Space in the open still just jumps
+- [ ] You come out of a vault still moving, faster than walking round would be
+- [ ] A long drop dips the camera and briefly slows you
+- [ ] Another player's slide visibly drops them on your screen too
 - [ ] The chained pair slows down when they pull apart, and `CHAIN TAUT` appears
 - [ ] `RUNNERS FREE` drops by one, and a dot in the pip row goes dark
 - [ ] Catching the last runner ends the round immediately with `SEEKERS WIN`

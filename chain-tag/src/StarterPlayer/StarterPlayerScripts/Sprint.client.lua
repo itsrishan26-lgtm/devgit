@@ -109,6 +109,15 @@ player.CharacterAdded:Connect(function()
 	currentSpeed = Config.Speeds.RunnerWalk
 end)
 
+-- Movement bumps this counter every time you start a slide. Sliding costs
+-- stamina so it stays a decision rather than a permanent way to travel.
+player:GetAttributeChangedSignal("CT_SlideCost"):Connect(function()
+	stamina = math.max(0, stamina - Config.Movement.Slide.Stamina)
+	if stamina <= 0 then
+		exhausted = true
+	end
+end)
+
 -- MapEvents bumps this counter when you pick up an energy crystal.
 player:GetAttributeChangedSignal("StaminaGrant"):Connect(function()
 	local amount = player:GetAttribute("StaminaGrantAmount") or 40
@@ -169,7 +178,10 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	-- Short speed burst from a pickup, on top of everything else.
 	local burst = player:GetAttribute("SpeedBonus") or 0
 
-	local target = (sprinting and sprintSpeed or walkSpeed) * chainMul + burst + chainAdd
+	-- A hard landing costs you a moment of speed on the ground.
+	local landing = player:GetAttribute("CT_LandSlow") or 1
+
+	local target = (sprinting and sprintSpeed or walkSpeed) * chainMul * landing + burst + chainAdd
 	if frozen then
 		target = 0
 	end
@@ -178,7 +190,12 @@ RunService.RenderStepped:Connect(function(deltaTime)
 	if math.abs(currentSpeed - target) < 0.05 then
 		currentSpeed = target
 	end
-	humanoid.WalkSpeed = currentSpeed
+	-- Movement takes WalkSpeed over for the length of a slide. One owner at
+	-- a time: two scripts writing it every frame is how you get a character
+	-- that stutters and nobody can work out why.
+	if player:GetAttribute("CT_MoveLock") ~= true then
+		humanoid.WalkSpeed = currentSpeed
+	end
 
 	local targetFov = baseFov + (sprinting and Config.Speeds.SprintFov or 0)
 	camera.FieldOfView += (targetFov - camera.FieldOfView) * math.min(1, deltaTime * 5)

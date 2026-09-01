@@ -100,7 +100,7 @@ local function validateSetup()
 			warn("[ChainTag] StarterPlayerScripts.CatchCountdownUI is the old HUD and is now built into ChainTagUI. Delete it.")
 		end
 		for _, name in ipairs({ "Sprint", "ChainTagUI", "ChainVisuals", "ScoreboardUI",
-			"AbilityBar", "ShopUI", "ChainTagSettings" }) do
+			"AbilityBar", "ShopUI", "ChainTagSettings", "Movement" }) do
 			local found = scripts:FindFirstChild(name)
 			if not found then
 				warn(string.format("[ChainTag] StarterPlayerScripts.%s is missing - add it as a LocalScript " ..
@@ -120,6 +120,7 @@ local function validateSetup()
 		{ name = "MapEvents", required = false, does = "no pickups, no beacon, no prison breaks" },
 		{ name = "Powerups", required = false, does = "no abilities, and the ability bar stays hidden" },
 		{ name = "Shop", required = false, does = "the store will refuse every purchase" },
+		{ name = "MovementService", required = false, does = "slides and vaults are not counted or shown to other players" },
 	}
 	for _, entry in ipairs(SERVER_SCRIPTS) do
 		local found = serverScripts:FindFirstChild(entry.name)
@@ -186,7 +187,7 @@ local runnerTeam = ensureTeam("Runners", BrickColor.new("Bright blue"))
 --------------------------------------------------------------------------
 
 local STAT_KEYS = { "Points", "TotalPoints", "Catches", "Wins", "Survivals",
-	"RoundsPlayed", "Rescues", "ChainBreaks" }
+	"RoundsPlayed", "Rescues", "ChainBreaks", "Vaults", "Slides" }
 local LEADERSTAT_KEYS = { Points = true, Catches = true }
 
 -- Saved the same way, but they hold text rather than numbers: what the

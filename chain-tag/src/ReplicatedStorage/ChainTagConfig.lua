@@ -312,6 +312,58 @@ Config.Rescue = {
 }
 
 --------------------------------------------------------------------------
+-- MOVEMENT
+-- Slide, vault and landings. Everybody has all of it from their first
+-- round - none of it is ever unlocked, bought or levelled into, because
+-- the moment movement is a reward the chase stops being about skill.
+--
+-- These are deliberately available in the lobby too. Somewhere to practise
+-- a vault without a seeker on you is how players learn the map's lines.
+--------------------------------------------------------------------------
+
+Config.Movement = {
+	Enabled = true,
+
+	-- C, or the Slide button on a phone. You have to already be moving
+	-- quickly, so it rewards commitment rather than being a second dash.
+	Slide = {
+		MinSpeed = 17,       -- how fast you must already be going
+		Speed = 34,          -- speed the slide starts at
+		Friction = 30,       -- studs/sec shed per second
+		EndSpeed = 15,       -- below this the slide is over
+		MaxTime = 1.1,
+		Cooldown = 1.1,
+		Stamina = 12,        -- so sliding is a decision, not a default
+		HipDrop = 1.5,       -- how far the character drops
+		CameraDip = 1.6,
+	},
+
+	-- Jump while running at something waist-high and you go over it
+	-- instead of into it. Same button as a jump on purpose: no new key to
+	-- learn, and the game works out what you meant.
+	Vault = {
+		MinHeight = 1.2,     -- shorter than this and you can just walk over
+		MaxHeight = 4.6,     -- taller than this cannot be cleared
+		Reach = 4.5,         -- how far ahead the obstacle can be
+		Depth = 6,           -- how far past it to look for a landing
+		Duration = 0.32,
+		Cooldown = 0.45,
+		Lift = 1.6,          -- arc height over the obstacle
+		ExitSpeed = 24,      -- momentum you keep on the far side
+	},
+
+	-- Falls have weight. A long drop costs you a moment on the ground,
+	-- which is what stops rooftops being a free escape from everything.
+	Landing = {
+		SoftDrop = 14,
+		HardDrop = 30,
+		HardSlowFactor = 0.55,
+		HardSlowTime = 0.5,
+		MaxDip = 2.4,
+	},
+}
+
+--------------------------------------------------------------------------
 -- POWERUPS
 -- Everybody gets Dash. The second slot swaps with your role: seekers get a
 -- radar sweep, runners get a vanish. Cooldowns are counted on the server -
@@ -414,6 +466,10 @@ Config.Sounds = {
 	-- click. Swap in your own SoundId per cue once you own one.
 	Cues = {
 		Click =           { pitch = 1.20, volume = 0.22 },
+		Slide =           { pitch = 0.75, volume = 0.28 },
+		Vault =           { pitch = 1.45, volume = 0.26 },
+		LandSoft =        { pitch = 0.85, volume = 0.20 },
+		LandHard =        { chord = { 0.55, 0.45 }, volume = 0.38 },
 		Heartbeat =       { pitch = 0.34, volume = 0.30 },
 		Deny =            { pitch = 0.50, volume = 0.20 },
 		AbilityUse =      { pitch = 1.60, volume = 0.30 },

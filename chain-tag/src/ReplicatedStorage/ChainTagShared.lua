@@ -28,7 +28,7 @@ local Config = require(script.Parent:WaitForChild("ChainTagConfig"))
 local REQUIRED_CONFIG = {
 	"Speeds", "Stamina", "Chain", "Colors", "Sounds", "Points",
 	"Map", "Pickups", "Beacon", "Rescue", "Abilities", "Levels", "Combo",
-	"Rarities", "Aura", "Shop", "Quality", "Heartbeat", "Music",
+	"Rarities", "Aura", "Shop", "Quality", "Heartbeat", "Music", "Movement",
 }
 
 do
@@ -51,7 +51,7 @@ Shared.Config = Config
 local IS_SERVER = RunService:IsServer()
 
 -- Remote names created under ReplicatedStorage.ChainTagRemotes.
-local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop", "Settings", "ChainBreak" }
+local REMOTE_NAMES = { "CatchCountdown", "Toast", "UseAbility", "Popup", "Collect", "Shop", "Settings", "ChainBreak", "Movement" }
 
 -- Default values for every replicated state attribute. Listing them here means
 -- the client never reads a nil attribute, so the HUD is correct on frame one.

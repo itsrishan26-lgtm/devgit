@@ -89,6 +89,7 @@ ServerScriptService
   MapEvents            Script  pickups, beacon, rescue (optional, self-contained)
   Powerups             Script  the three abilities and their cooldowns
   ChainService         ModuleScript  chain order, tension, breaks, chain speed
+  MovementService      Script  validates and counts slides and vaults
   Shop                 Script  purchases, equipping, ownership
 
 StarterPlayer/StarterPlayerScripts
@@ -98,11 +99,26 @@ StarterPlayer/StarterPlayerScripts
   ScoreboardUI         LocalScript  Tab scoreboard and the results panel
   AbilityBar           LocalScript  ability buttons, cooldown sweeps, dash impulse
   ShopUI               LocalScript  the store panel
+  Movement             LocalScript  slide, vault, landing weight
   ChainTagSettings     LocalScript  settings panel and the quality dial
 
 Workspace
   ChainTagMap          Folder (runtime): pickups and the beacon
 ```
+
+## Movement
+
+Shift sprints, C slides, Space vaults. Every player has all of it from their
+first round and none of it is ever unlocked - movement as a reward turns the
+chase into a function of playtime rather than skill.
+
+The client performs the move on the frame the key is pressed and tells the
+server afterwards; `MovementService` owns the cooldowns and the counters, so
+nothing is ever paid out from a client's word. Server cooldowns are 10%
+shorter than the client's to absorb latency. Slide takes WalkSpeed over from
+Sprint via the `CT_MoveLock` attribute - one owner at a time. Vault anchors
+the root for 0.32s and tweens an arc, and refuses to unanchor while `Frozen`
+is set, so it can never be used to escape a catch countdown.
 
 ## Performance model
 
