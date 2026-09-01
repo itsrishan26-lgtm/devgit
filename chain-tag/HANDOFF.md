@@ -212,9 +212,9 @@ If picking that up, the honest order is:
    shaped. Extracting a GameMode module with `onRoundStart`, `onCatch` and
    `checkWinCondition` is the prerequisite for Infection, Freeze Tag and the
    rest, and it is a refactor of `GameSetup` rather than new systems.
-2. **Movement.** Sliding and vaulting are the highest-value additions for how
-   the game feels, and they are client-predicted with server validation - the
-   same shape as the dash already in `Powerups`.
+2. **Movement.** Done - slide, vault and landing weight are in. Wall running
+   and ledge grabs are the next rung, and only worth adding once the map has
+   walls worth running on.
 3. **Spectating.** Cheap to build and it fixes the worst moment in the game,
    which is being caught early.
 4. **Maps.** The code assumes nothing about the map except two spawn pads and
