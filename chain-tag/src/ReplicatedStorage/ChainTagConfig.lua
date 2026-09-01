@@ -1,0 +1,543 @@
+--[[
+	ChainTagConfig  -  ModuleScript
+	WHERE IT GOES: ReplicatedStorage > ChainTagConfig
+	The name must match EXACTLY (no spaces, capital C, capital T, capital C).
+
+	Every number you might want to tweak lives in this one file. Nothing else
+	needs editing to rebalance the game - change a value here, press Play.
+--]]
+
+local Config = {}
+
+-- Printed to Output on every server start. If Studio is not showing the
+-- build you expect, the files Studio has are not the files you think it
+-- has - you have not pulled, or Rojo is not connected, or you are looking
+-- at a copy that was pasted in by hand. It answers that question in one
+-- line instead of three screenshots.
+Config.Version = "0.9.0  task-2 movement"
+
+
+--------------------------------------------------------------------------
+-- ROUND FLOW (all times in seconds)
+--------------------------------------------------------------------------
+
+-- How many players before a real round can start.
+-- Set to 1 while testing alone: you get a solo practice round (no seeker).
+Config.MinPlayers = 2
+
+Config.Intermission = 12     -- lobby time between rounds
+Config.HeadStart = 8         -- seekers are frozen this long at round start
+Config.RoundLength = 120     -- length of the hunt itself
+Config.ResultsTime = 8       -- how long the win/lose banner stays up
+Config.RespawnTime = 3       -- Roblox default is 5s; a shorter one keeps rounds moving
+
+-- When this many seconds are left, every remaining runner is outlined
+-- through walls for the seeker team. Stops endgame hide-and-seek stalls.
+Config.EndgameRevealAt = 30
+
+-- When one runner is left, everybody gets a "LAST RUNNER" marker on them.
+Config.LastRunnerBeacon = true
+
+--------------------------------------------------------------------------
+-- CATCHING
+--------------------------------------------------------------------------
+
+Config.CatchRadius = 6        -- studs between root parts that counts as a tag
+Config.CatchTickRate = 0.1    -- how often the server checks (10x a second)
+Config.CatchCooldown = 1.25   -- per-seeker delay before they can tag again
+Config.CatchCountdown = 3     -- red 3-2-1 shown to everyone on a catch
+Config.RequireLineOfSight = true  -- no tagging through walls
+Config.TeleportOnCatch = true     -- both players return to Seeker Spawn after the countdown
+
+--------------------------------------------------------------------------
+-- SPAWNS
+-- These MUST match the SpawnLocation names in Workspace exactly,
+-- including the space in the middle.
+--------------------------------------------------------------------------
+
+Config.SeekerSpawnName = "Seeker Spawn"
+Config.RunnerSpawnName = "Runner Spawn"
+
+Config.SpawnRingRadius = 10   -- first ring of spawn slots, in studs
+Config.SpawnRingSpacing = 6   -- extra studs per additional ring
+Config.SpawnSlotsPerRing = 8
+
+--------------------------------------------------------------------------
+-- MOVEMENT
+-- Seekers are a touch faster than runners so a chase actually closes.
+-- Runners get the bigger stamina pool, so they win by managing it.
+--------------------------------------------------------------------------
+
+Config.Speeds = {
+	RunnerWalk = 16,
+	RunnerSprint = 24,
+	SeekerWalk = 17,
+	SeekerSprint = 25,
+	Smoothing = 9,   -- higher = snappier acceleration
+	SprintFov = 6,   -- extra field of view while sprinting
+}
+
+Config.Stamina = {
+	Max = 100,
+	Drain = 20,        -- per second while sprinting
+	Regen = 14,        -- per second while recovering
+	RegenDelay = 0.7,  -- pause before regen starts
+	MinToRestart = 15, -- after hitting empty you need this much to sprint again
+	RunnerBonus = 25,  -- runners get this much extra max stamina
+}
+
+--------------------------------------------------------------------------
+-- THE CHAIN
+--   "Leash"  - chained players slow each other down when they drift apart
+--              and a chain is drawn between them (recommended)
+--   "Visual" - chain is drawn, but never slows anyone
+--   "Off"    - no chain at all
+--
+-- Note: this is a *simulated* leash, not a RopeConstraint. Physical ropes
+-- between two player characters fight over network ownership and fling
+-- people across the map. This version never touches physics.
+--------------------------------------------------------------------------
+
+Config.Chain = {
+	Mode = "Leash",
+
+	-- THE SHAPE OF THE CHAIN
+	-- A line, never a tree, and never longer than this. An eight-person
+	-- chain is not four times as interesting as a four-person one; it is a
+	-- conga line that cannot lose. Everyone caught past the cap becomes a
+	-- Support Seeker instead - free-roaming, no chain, faster scans.
+	MaxLength = 4,
+
+	-- WHY BREAKING IT IS A RUNNER'S WIN
+	-- A chain in formation is FASTER than four loose seekers. That is the
+	-- whole balance: the chain is a reward the seekers have to hold on to
+	-- by moving as a unit, so stretching it costs them speed and snapping
+	-- it costs them the bonus outright. Without this the chain is pure
+	-- penalty, and breaking it would be doing the seekers a favour.
+	FormationBonus = 3,    -- extra studs/sec while the whole chain is tight
+
+	SlowStart = 14,        -- inside this, the chain is in formation
+	MaxDistance = 22,      -- bonus is gone, slowdown starts to bite
+	MinSpeedFactor = 0.3,  -- slowest a stretched chain can drag you
+	WarnDistance = 30,     -- the chain groans; everyone gets told
+	BreakDistance = 38,    -- past here the clock starts
+	BreakGrace = 1.1,      -- seconds beyond BreakDistance before it snaps
+
+	-- What a break costs the seekers, and pays the runner who forced it.
+	RecoilTime = 3,        -- how long the member who lost their link is slow
+	RecoilFactor = 0.55,
+	BreakPoints = 30,
+	BreakCreditRange = 70, -- a runner this close to the snap gets the credit
+	RefillDelay = 4,       -- before a Support Seeker is pulled into the gap
+
+	Links = 7,
+	LinkSize = Vector3.new(0.45, 0.45, 0.95),
+	Color = Color3.fromRGB(148, 151, 158),
+	Sag = 2.5,             -- how far the chain droops in the middle
+	RenderDistance = 220,  -- chains further than this are not drawn
+}
+
+--------------------------------------------------------------------------
+-- THE MAP
+-- Pickups and beacons find their own ground by raycasting downwards, so
+-- they work on any map without you marking or tagging a single part.
+-- Radius is measured out from Center; keep it inside your grass so nothing
+-- spawns in the water.
+--------------------------------------------------------------------------
+
+Config.Map = {
+	Center = Vector3.new(0, 0, 0),
+	Radius = 170,
+	ScanHeight = 300,     -- raycasts start this high and look straight down
+	MinSpacing = 30,      -- studs between two spawned things
+	MinGroundNormal = 0.75, -- how flat a surface has to be to count as ground
+}
+
+-- Glowing crystals scattered around the park. Runners get their stamina
+-- back plus a short burst of speed; seekers get a smaller burst. Both sides
+-- want them, so they become places worth fighting over.
+Config.Pickups = {
+	Enabled = true,
+	Count = 8,
+	RespawnTime = 22,     -- a taken pickup comes back somewhere new
+	Radius = 6,
+	Hover = 3,
+	SeekerScale = 0.6,    -- seekers get this fraction of the speed reward
+}
+
+-- Rarity ladder. Weights are picked so Common and Rare feel like scenery,
+-- Epic feels like a find, and Legendary is a genuine event - it announces
+-- itself to the whole server when it lands, so people race for it.
+-- Colour is the only thing that communicates rarity, and it is used
+-- consistently: crystal, light, collection burst, popup card and aura.
+Config.Rarities = {
+	{
+		name = "Common", weight = 62, color = Color3.fromRGB(120, 255, 190),
+		size = 1.7, light = 12, spin = 1.6,
+		stamina = 40, speed = 4, duration = 4, points = 0,
+		announce = false, cue = "PickupCommon", aura = "Motes",
+	},
+	{
+		name = "Rare", weight = 26, color = Color3.fromRGB(88, 170, 255),
+		size = 2.0, light = 17, spin = 2.1,
+		stamina = 70, speed = 6, duration = 5, points = 5,
+		announce = false, cue = "PickupRare", aura = "Ring",
+	},
+	{
+		name = "Epic", weight = 9, color = Color3.fromRGB(190, 120, 255),
+		size = 2.4, light = 23, spin = 2.8,
+		stamina = 100, speed = 8, duration = 6, points = 15,
+		announce = false, cue = "PickupEpic", aura = "DualRing",
+	},
+	{
+		name = "Legendary", weight = 3, color = Color3.fromRGB(255, 200, 80),
+		size = 2.9, light = 32, spin = 3.6,
+		stamina = 140, speed = 11, duration = 8, points = 40,
+		announce = true, cue = "PickupLegendary", aura = "Halo",
+	},
+}
+
+-- Auras and the burst a crystal leaves behind, both built from plain parts
+-- on each client: no texture to load and nothing replicated.
+--
+-- A rarer aura is a DIFFERENT SHAPE, not more parts. Legendary uses eleven
+-- orbs to Epic's six because the design needs them, not to look expensive.
+-- "More particles" is how a game ends up looking cheap and running badly at
+-- the same time.
+Config.Aura = {
+	Radius = 2.6,
+	Height = 0.1,
+	OrbSize = 0.45,
+	Spin = 2.4,           -- radians per second
+	BurstShards = 8,
+	BurstTime = 0.45,
+	BurstSpread = 7,
+
+	Styles = {
+		-- Slow motes drifting around you at different heights.
+		Motes =    { orbs = 3, size = 0.85, spin = 0.7, drift = 1.1, rings = 1 },
+		-- One clean orbiting ring.
+		Ring =     { orbs = 4, size = 1.0,  spin = 2.4, drift = 0.25, rings = 1 },
+		-- Two rings turning against each other at different heights.
+		DualRing = { orbs = 6, size = 0.9,  spin = 2.9, drift = 0.15, rings = 2 },
+		-- A wide slow halo with a single pulsing core above the head.
+		Halo =     { orbs = 8, size = 0.75, spin = 1.1, drift = 0.1, rings = 1,
+			radius = 3.4, height = 3.1, core = true },
+	},
+}
+
+--------------------------------------------------------------------------
+-- QUALITY
+-- One dial that scales everything a client draws. Auto-detected on the
+-- first join by measuring actual frame time, and changeable any time in
+-- Settings. Nothing here touches gameplay - a player on Low sees a shorter
+-- chain, never a shorter cooldown.
+--------------------------------------------------------------------------
+
+Config.Quality = {
+	AutoDetectSeconds = 4,    -- how long to sample frame time before deciding
+	LowFpsThreshold = 35,     -- below this, drop to Low
+	MediumFpsThreshold = 52,  -- below this, drop to Medium
+
+	Levels = {
+		{
+			name = "Low",
+			chainLinks = 3, chainDistance = 90,
+			auraDistance = 70, auraScale = 0.5,
+			burst = false, streaks = false, shake = false, titles = false,
+		},
+		{
+			name = "Medium",
+			chainLinks = 5, chainDistance = 150,
+			auraDistance = 130, auraScale = 0.75,
+			burst = true, streaks = true, shake = true, titles = true,
+		},
+		{
+			name = "High",
+			chainLinks = 7, chainDistance = 220,
+			auraDistance = 220, auraScale = 1,
+			burst = true, streaks = true, shake = true, titles = true,
+		},
+	},
+}
+
+--------------------------------------------------------------------------
+-- HEARTBEAT
+-- The beat quickens as a seeker closes on you. It is the one piece of audio
+-- that tells you something the HUD cannot, so it is deliberately the only
+-- sound allowed to play continuously.
+--------------------------------------------------------------------------
+
+Config.Heartbeat = {
+	Enabled = true,
+	StartAt = 0.3,        -- danger level where it starts (0..1)
+	SlowInterval = 1.15,  -- seconds between beats when it starts
+	FastInterval = 0.32,  -- seconds between beats at point blank
+}
+
+--------------------------------------------------------------------------
+-- MUSIC
+-- Empty on purpose. Paste only ids you own or know are free to use - a bad
+-- id means a red error for every player and silence for the whole round.
+-- The state machine crossfades, so tracks never cut off abruptly.
+--------------------------------------------------------------------------
+
+Config.Music = {
+	Enabled = true,
+	Volume = 0.16,
+	FadeTime = 1.6,
+	Tracks = {
+		Lobby = "",     -- Waiting and Intermission
+		Round = "",     -- the hunt
+		Final = "",     -- the last EndgameRevealAt seconds
+		Results = "",   -- the win banner
+	},
+}
+
+-- A marked circle that moves around the map. Runners earn points every
+-- second they stand in it, which drags people out of the boring corners -
+-- and tells the seekers exactly where to look.
+Config.Beacon = {
+	Enabled = true,
+	Radius = 24,
+	MoveEvery = 35,
+	StartAfter = 15,      -- seconds into the round before the first one
+	PointsPerSecond = 1,
+	Color = Color3.fromRGB(255, 205, 90),
+}
+
+-- Free a teammate: stand next to somebody on the end of a chain and hold
+-- your ground. Gives runners something to do besides run, and gives the
+-- seeker team a reason to guard its chain instead of splitting up.
+Config.Rescue = {
+	Enabled = true,
+	Radius = 9,
+	HoldTime = 4,
+	Immunity = 3,          -- seconds the freed player cannot be re-tagged
+	Points = 20,
+	OncePerPlayer = true,  -- each player can only be freed once a round
+	BlockedInEndgame = true, -- no rescues once the runners get revealed
+}
+
+--------------------------------------------------------------------------
+-- MOVEMENT
+-- Slide, vault and landings. Everybody has all of it from their first
+-- round - none of it is ever unlocked, bought or levelled into, because
+-- the moment movement is a reward the chase stops being about skill.
+--
+-- These are deliberately available in the lobby too. Somewhere to practise
+-- a vault without a seeker on you is how players learn the map's lines.
+--------------------------------------------------------------------------
+
+Config.Movement = {
+	Enabled = true,
+
+	-- C, or the Slide button on a phone. You have to already be moving
+	-- quickly, so it rewards commitment rather than being a second dash.
+	Slide = {
+		MinSpeed = 17,       -- how fast you must already be going
+		Speed = 34,          -- speed the slide starts at
+		Friction = 30,       -- studs/sec shed per second
+		EndSpeed = 15,       -- below this the slide is over
+		MaxTime = 1.1,
+		Cooldown = 1.1,
+		Stamina = 12,        -- so sliding is a decision, not a default
+		HipDrop = 1.5,       -- how far the character drops
+		CameraDip = 1.6,
+	},
+
+	-- Jump while running at something waist-high and you go over it
+	-- instead of into it. Same button as a jump on purpose: no new key to
+	-- learn, and the game works out what you meant.
+	Vault = {
+		MinHeight = 1.2,     -- shorter than this and you can just walk over
+		MaxHeight = 4.6,     -- taller than this cannot be cleared
+		Reach = 4.5,         -- how far ahead the obstacle can be
+		Depth = 6,           -- how far past it to look for a landing
+		Duration = 0.32,
+		Cooldown = 0.45,
+		Lift = 1.6,          -- arc height over the obstacle
+		ExitSpeed = 24,      -- momentum you keep on the far side
+	},
+
+	-- Falls have weight. A long drop costs you a moment on the ground,
+	-- which is what stops rooftops being a free escape from everything.
+	Landing = {
+		SoftDrop = 14,
+		HardDrop = 30,
+		HardSlowFactor = 0.55,
+		HardSlowTime = 0.5,
+		MaxDip = 2.4,
+	},
+}
+
+--------------------------------------------------------------------------
+-- POWERUPS
+-- Everybody gets Dash. The second slot swaps with your role: seekers get a
+-- radar sweep, runners get a vanish. Cooldowns are counted on the server -
+-- the buttons on your screen only draw what the server already decided.
+--------------------------------------------------------------------------
+
+Config.Abilities = {
+	Enabled = true,
+
+	Dash = {
+		Cooldown = 9,
+		Power = 62,      -- forward shove, in studs per second
+		Lift = 9,        -- small hop so it clears kerbs instead of stubbing
+	},
+
+	-- Seekers only: every runner lights up through walls for a moment.
+	-- Support Seekers - the ones the chain had no room for - get it back
+	-- faster. That is their whole identity: no chain, better eyes.
+	Radar = {
+		Cooldown = 24,
+		SupportScale = 0.5,
+		Duration = 4,
+	},
+
+	-- Runners only: you fade out for everyone else. It breaks the chase
+	-- rather than making you safe - you can still be tagged while faded.
+	Vanish = {
+		Cooldown = 26,
+		Duration = 4,
+		Transparency = 0.85,
+	},
+}
+
+-- Catch two or more runners inside this many seconds and the whole server
+-- hears about it. Streaks are what make a good seeker feel like one.
+Config.Combo = {
+	Window = 20,
+}
+
+--------------------------------------------------------------------------
+-- LEVELS
+-- Levels come from total points earned, so they carry across rounds and
+-- give people a reason to come back. Level 2 at 40 points, 3 at 160,
+-- 4 at 360: level = 1 + floor(sqrt(points / PointsPerLevel))
+--------------------------------------------------------------------------
+
+Config.Levels = {
+	PointsPerLevel = 40,
+}
+
+--------------------------------------------------------------------------
+-- SCORING  (Points and Catches show on the player list)
+--------------------------------------------------------------------------
+
+Config.Points = {
+	Catch = 10,       -- per runner you personally tag
+	Survive = 25,     -- for being uncaught when the timer runs out
+	SeekerWin = 15,   -- to every seeker when the team catches everyone
+	-- beacon points are Config.Beacon.PointsPerSecond
+	-- rescue points are Config.Rescue.Points
+}
+
+Config.SaveStats = true                    -- set false to keep stats session-only
+Config.DataStoreName = "ChainTagStats_v1"  -- bump the version to wipe saved stats
+
+--------------------------------------------------------------------------
+-- LOOK & FEEL
+--------------------------------------------------------------------------
+
+Config.Colors = {
+	Seeker = Color3.fromRGB(232, 72, 72),
+	Runner = Color3.fromRGB(78, 158, 255),
+	Neutral = Color3.fromRGB(235, 238, 245),
+	Good = Color3.fromRGB(96, 214, 140),
+	Warn = Color3.fromRGB(255, 196, 84),
+}
+
+-- Danger vignette: how close a seeker has to be before a runner's screen
+-- starts glowing red at the edges.
+Config.DangerRadius = 38
+
+--------------------------------------------------------------------------
+-- SOUND
+-- These rbxasset:// paths ship with Roblox itself, so they always play and
+-- can never be "not authorized" like a private rbxassetid:// upload.
+-- The game pitch-shifts this one sample to make its whole audio language.
+-- Paste your own rbxassetid:// links here once you own/verify them.
+--------------------------------------------------------------------------
+
+Config.Sounds = {
+	-- The one sample everything is built from. It ships with Roblox, so it
+	-- can never fail with "not authorized" like a private upload.
+	Blip = "rbxasset://sounds/electronicpingshort.wav",
+	UiVolume = 0.35,
+	CatchVolume = 0.5,
+
+	-- Each cue is that sample at a different pitch. A cue with `chord`
+	-- plays several pitches in quick succession, which is what makes the
+	-- rarer pickups and the level-up sound like an event rather than a
+	-- click. Swap in your own SoundId per cue once you own one.
+	Cues = {
+		Click =           { pitch = 1.20, volume = 0.22 },
+		Slide =           { pitch = 0.75, volume = 0.28 },
+		Vault =           { pitch = 1.45, volume = 0.26 },
+		LandSoft =        { pitch = 0.85, volume = 0.20 },
+		LandHard =        { chord = { 0.55, 0.45 }, volume = 0.38 },
+		Heartbeat =       { pitch = 0.34, volume = 0.30 },
+		Deny =            { pitch = 0.50, volume = 0.20 },
+		AbilityUse =      { pitch = 1.60, volume = 0.30 },
+		AbilityReady =    { pitch = 1.35, volume = 0.26 },
+		CountdownTick =   { pitch = 1.00, volume = 0.35 },
+		RoundStart =      { chord = { 1.2, 1.6 }, volume = 0.40 },
+		Catch =           { pitch = 1.10, volume = 0.35 },
+		Caught =          { pitch = 0.62, volume = 0.50 },
+		Rescue =          { chord = { 1.2, 1.6 }, volume = 0.40 },
+		Beacon =          { chord = { 1.1, 1.4 }, volume = 0.32 },
+		Win =             { chord = { 1.2, 1.5, 1.9 }, volume = 0.45 },
+		Lose =            { chord = { 0.9, 0.7 }, volume = 0.45 },
+		LevelUp =         { chord = { 1.2, 1.5, 1.9 }, volume = 0.42 },
+		Purchase =        { chord = { 1.3, 1.7 }, volume = 0.40 },
+		PickupCommon =    { pitch = 1.30, volume = 0.28 },
+		PickupRare =      { chord = { 1.3, 1.7 }, volume = 0.34 },
+		PickupEpic =      { chord = { 1.2, 1.5, 1.9 }, volume = 0.40 },
+		PickupLegendary = { chord = { 1.0, 1.3, 1.6, 2.1 }, volume = 0.52 },
+	},
+	ChordGap = 0.07,      -- seconds between the notes of a chord
+
+	-- Background music. Left empty on purpose: only paste an id you own or
+	-- know is free to use, or the whole server gets a red error and silence.
+	Music = "",
+	MusicVolume = 0.18,
+}
+
+--------------------------------------------------------------------------
+-- THE STORE
+-- Everything costs Points, which you earn by playing. Nothing here touches
+-- how the game plays - they are all cosmetic on purpose, so nobody can buy
+-- an advantage with a grind. Spending Points never lowers your level:
+-- levels come from TotalPoints, which only ever goes up.
+--------------------------------------------------------------------------
+
+Config.Shop = {
+	Enabled = true,
+	Items = {
+		-- Trails stream behind you while you sprint.
+		{ id = "trail_mint",   kind = "Trail", name = "Mint Trail",   price = 60,  color = Color3.fromRGB(120, 255, 190) },
+		{ id = "trail_ember",  kind = "Trail", name = "Ember Trail",  price = 120, color = Color3.fromRGB(255, 138, 76) },
+		{ id = "trail_violet", kind = "Trail", name = "Violet Trail", price = 220, color = Color3.fromRGB(190, 120, 255) },
+
+		-- Auras orbit you all round long.
+		{ id = "aura_sky",   kind = "Aura", name = "Sky Aura",   price = 180, color = Color3.fromRGB(88, 170, 255), style = "Ring" },
+		{ id = "aura_dusk",  kind = "Aura", name = "Dusk Aura",  price = 320, color = Color3.fromRGB(190, 120, 255), style = "DualRing" },
+		{ id = "aura_gold",  kind = "Aura", name = "Gold Halo",  price = 450, color = Color3.fromRGB(255, 200, 80), style = "Halo" },
+
+		-- Chain colours apply to the chain you are dragging.
+		{ id = "chain_bronze", kind = "Chain", name = "Bronze Chain", price = 140, color = Color3.fromRGB(196, 132, 74) },
+		{ id = "chain_frost",  kind = "Chain", name = "Frost Chain",  price = 260, color = Color3.fromRGB(168, 226, 255) },
+
+		-- Titles float over your head.
+		{ id = "title_quick",  kind = "Title", name = "QUICK",     price = 100, text = "QUICK" },
+		{ id = "title_ghost",  kind = "Title", name = "GHOST",     price = 300, text = "GHOST" },
+		{ id = "title_warden", kind = "Title", name = "WARDEN",    price = 500, text = "WARDEN" },
+	},
+}
+
+-- Prints extra detail to the Output window while you are building.
+Config.Debug = false
+
+return Config
