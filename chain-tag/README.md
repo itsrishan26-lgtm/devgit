@@ -4,15 +4,71 @@ Round-based chain tag for Roblox, in Luau. One seeker starts; everyone they
 chain becomes a seeker too, until the park is one long chain or the clock runs
 out.
 
-Seven scripts, no models to import, no paid assets. Everything you would want
-to tune lives in one file (`ChainTagConfig`).
+Seventeen files, no models to import, no paid assets, no purchases required to
+compete. Everything you would want to tune lives in one of them
+(`ChainTagConfig`).
 
 ---
 
-## 1. Setup (about five minutes)
+## 1. Setup
 
-Do these in order. **Names matter** — the scripts find each other by name, and
-a typo is a silent failure.
+There are two ways in. **Use Rojo** if you possibly can.
+
+---
+
+### Setup A — Rojo (recommended)
+
+Rojo syncs the files in this repo straight into Studio. It ends every setup
+problem in one go: no pasting, no version mismatches between one file and
+another, no broken pastes, and **no deciding whether something is a Script, a
+LocalScript or a ModuleScript** — Rojo reads that off the filename:
+
+```
+ChainService.lua          -> ModuleScript
+GameSetup.server.lua      -> Script
+Movement.client.lua       -> LocalScript
+```
+
+**1. Install Rojo.** Get the CLI and the Studio plugin from
+[rojo.space](https://rojo.space) — the CLI is a `rojo.exe` you put on your
+PATH, and `rojo plugin install` adds the Studio plugin.
+
+**2. Clone this repo** anywhere on your machine.
+
+**3. Back up your place first.** `File → Save to File` and keep the `.rbxl`
+somewhere safe. Do this before the first connect, every time, forever.
+
+**4. Delete any hand-pasted copies.** If you already pasted these scripts in
+by hand, **delete them from the Explorer now** — all of them, in
+ReplicatedStorage, ServerScriptService and StarterPlayerScripts. Rojo creates
+its own, and two `GameSetup`s means two round loops fighting each other.
+
+**5. Serve and connect:**
+
+```
+cd chain-tag
+rojo serve
+```
+
+Then in Studio: the Rojo plugin → **Connect**.
+
+Every change to a file now appears in Studio a second later. When I push, you
+`git pull` and Studio updates itself.
+
+**Your map is safe.** Rojo only manages the three paths named in
+`default.project.json` — ReplicatedStorage, ServerScriptService and
+StarterPlayerScripts. It has no opinion about Workspace, so the park, the
+spawn pads and your decor are untouched.
+
+You still do steps 1 and 5 of the manual setup below — the two spawn pads,
+and deleting the old junk from StarterPack. Rojo does not build your map.
+
+---
+
+### Setup B — copy and paste
+
+If Rojo is not an option. Do these in order. **Names matter** — the scripts
+find each other by name, and a typo is a silent failure.
 
 ### Step 1 — the two spawn pads
 
@@ -460,7 +516,7 @@ Two more that are worth the click:
 - Untick **CastShadow** on small decor. Shadows on 121 flowers cost real
   frames and nobody has ever noticed them.
 
-## 5b. Tuning
+## 6. Tuning
 
 Open `ChainTagConfig`. The ones you will actually reach for:
 
@@ -584,7 +640,7 @@ an id you own, or the whole server gets a red error and silence.
 
 ---
 
-## 6. Test checklist
+## 7. Test checklist
 
 Studio, **Test > Players > 2 Players**:
 
@@ -636,7 +692,7 @@ Studio, **Test > Players > 2 Players**:
 
 ---
 
-## 7. Still on the list
+## 8. Still on the list
 
 Not done, deliberately, because they are map and asset work rather than code:
 
@@ -655,9 +711,14 @@ Not done, deliberately, because they are map and asset work rather than code:
 
 ---
 
-## Using Rojo instead of copy-paste
+## Rojo notes
 
-`default.project.json` is set up for Rojo 7. `rojo serve` from this folder and
-connect from Studio — file names map to the right class automatically
-(`.server.lua` becomes a Script, `.client.lua` a LocalScript). Copy-paste is
-still fine; the two approaches produce the same tree.
+`default.project.json` is set up for Rojo 7 and maps the three services the
+game lives in. New files are picked up automatically — the project file lists
+directories, not individual scripts, so nothing needs editing when a script
+is added.
+
+The two approaches produce an identical tree. Copy-paste is not "the simple
+way" and Rojo "the advanced way": Rojo is the one where the class of every
+script is decided by the filename instead of by you remembering, which is
+where most of the setup mistakes in this project have come from.
